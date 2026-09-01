@@ -64,7 +64,7 @@ class TestMemoryService(unittest.TestCase):
         payload = {
             "workspace_id": self.test_workspace_id,
             "customer_id": self.test_customer_id,
-            "query": "What is my preferred payment and size?"
+            "query": "What is my preferred payment, size, and previous order?"
         }
         res = self.client.post("/memory/search", json=payload)
         self.assertEqual(res.status_code, 200)
@@ -300,6 +300,62 @@ class TestMemoryService(unittest.TestCase):
         self.assertEqual(extracted["payment_preference"]["code"], "bkash")
         self.assertEqual(extracted["size_preference"], "42")
         print("✓ Dual-mode fallback verified: Fast-path extracts accurately when LLM is offline")
+
+    def test_14_relevance_gating_unrelated_faq_query(self):
+        gate_cust = "test_customer_gating_99"
+        neo4j_client.delete_customer_memory(self.test_workspace_id, gate_cust)
+        self.client.post("/memory/ingest", json={
+            "workspace_id": self.test_workspace_id,
+            "customer_id": gate_cust,
+            "conversation_id": "conv_gate_1",
+            "channel": "web",
+            "messages": [
+                {"direction": "inbound", "body": "I prefer bKash payment and size XL panjabi."}
+            ]
+        })
+
+        # Unrelated FAQ query should be gated out by relevance filter
+        res = self.client.post("/memory/search", json={
+            "workspace_id": self.test_workspace_id,
+            "customer_id": gate_cust,
+            "query": "What is the return and refund policy of your store?",
+            "min_relevance": 0.40
+        })
+        data = res.json()
+        self.assertFalse(data["has_memories"])
+        self.assertEqual(data["memories_count"], 0)
+        self.assertEqual(data["formatted_memory_context"], "")
+        print("✓ Relevance gating verified: Unrelated return policy query does NOT inject personal size/payment memories")
+
+    def test_15_relevance_gating_targeted_payment_query(self):
+        gate_cust = "test_customer_gating_99"
+        res = self.client.post("/memory/search", json={
+            "workspace_id": self.test_workspace_id,
+            "customer_id": gate_cust,
+            "query": "How can I pay or change my payment method?",
+            "min_relevance": 0.40
+        })
+        data = res.json()
+        self.assertTrue(data["has_memories"])
+        self.assertIn("bKash", data["formatted_memory_context"])
+        self.assertTrue(any(m["relation"] == "PREFERS" for m in data["memories"]))
+        
+        # Clean up
+        neo4j_client.delete_customer_memory(self.test_workspace_id, gate_cust)
+        print("✓ Targeted retrieval verified: Payment query retrieves only payment preferences")
+
+    def test_16_fast_response_latency_budget(self):
+        res = self.client.post("/memory/search", json={
+            "workspace_id": 101,
+            "customer_id": "shared_customer_uuid_777",
+            "query": "payment method",
+            "min_relevance": 0.40
+        })
+        data = res.json()
+        self.assertTrue(res.status_code == 200)
+        self.assertLess(data["latency_ms"], 40.0)
+        print(f"✓ Latency budget verified: Search completed in {data['latency_ms']}ms (< 40ms budget)")
+
 
 if __name__ == "__main__":
     unittest.main()

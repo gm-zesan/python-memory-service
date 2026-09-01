@@ -151,7 +151,9 @@ def search_memory(req: MemorySearchRequest):
         search_result = memory_retriever.search_memories(
             workspace_id=req.workspace_id,
             customer_id=req.customer_id,
+            query=req.query,
             limit=req.limit,
+            min_relevance=req.min_relevance,
         )
         latency_ms = round((time.time() - t_start) * 1000, 2)
         return MemorySearchResponse(
