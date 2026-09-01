@@ -197,8 +197,10 @@ class MemoryExtractor:
         Asynchronously extract complex, multi-entity relationships using configured LLM.
         Times out gracefully after 2.5s and falls back to deterministic extraction.
         """
-        api_key = config.LLM_API_KEY
-        if not api_key:
+        settings = config.get_llm_settings()
+        api_key = settings.get('api_key')
+        is_local = settings.get('provider') in ('ollama', 'local', 'vllm')
+        if not api_key and not is_local:
             return None
 
         # Build conversation text
@@ -233,7 +235,7 @@ class MemoryExtractor:
                 "Content-Type": "application/json"
             }
             payload = {
-                "model": config.LLM_MODEL,
+                "model": settings["model"],
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Customer Dialogue:\n{prompt_text}"}
@@ -243,7 +245,7 @@ class MemoryExtractor:
                 "response_format": {"type": "json_object"}
             }
             with httpx.Client(timeout=2.5) as client:
-                res = client.post(f"{config.LLM_BASE_URL}/chat/completions", headers=headers, json=payload)
+                res = client.post(f"{settings["base_url"]}/chat/completions", headers=headers, json=payload)
                 if res.status_code == 200:
                     data = res.json()
                     content = data["choices"][0]["message"]["content"]
