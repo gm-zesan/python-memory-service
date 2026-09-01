@@ -31,6 +31,10 @@ class MemoryRetriever:
                 formatted_lines.append(f"- Preferred Payment: {obj}{status_tag}")
             elif rel == "PREFERS_SIZE":
                 formatted_lines.append(f"- Preferred Size: {obj}{status_tag}")
+            elif rel == "PREFERS_COLOR":
+                formatted_lines.append(f"- Preferred Color: {obj}{status_tag}")
+            elif rel == "PREFERS_DELIVERY":
+                formatted_lines.append(f"- Delivery Preference: {obj}{status_tag}")
             elif rel == "DISCUSSED":
                 formatted_lines.append(f"- Previously Discussed Order: #{obj}")
             elif rel == "INTERESTED_IN":

@@ -1,7 +1,6 @@
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
-# pyrefly: ignore [missing-import]
 from neo4j import GraphDatabase, Driver
 from .config import config
 
@@ -101,7 +100,6 @@ class Neo4jClient:
     ):
         query = """
         MATCH (c:Customer {workspace_id: $workspace_id, id: $customer_id})
-        // Retire existing active payment preference if different
         OPTIONAL MATCH (c)-[old_r:PREFERS {status: 'current'}]->(old_p:PaymentMethod)
         WHERE old_p.code <> $payment_code
         SET old_r.status = 'past', old_r.valid_to = datetime()
@@ -139,8 +137,7 @@ class Neo4jClient:
     ):
         query = """
         MATCH (c:Customer {workspace_id: $workspace_id, id: $customer_id})
-        // Retire prior size preference in same scope
-        OPTIONAL MATCH (c)-[old_r:PREFERS_SIZE {status: 'current'}]->(old_pr:Preference)
+        OPTIONAL MATCH (c)-[old_r:PREFERS_SIZE {status: 'current'}]->(old_pr:Preference {key: 'size'})
         WHERE old_pr.category_scope = $category_scope AND old_pr.value <> $size_value
         SET old_r.status = 'past', old_r.valid_to = datetime()
 
@@ -165,6 +162,81 @@ class Neo4jClient:
                 conversation_id=conversation_id,
                 size_value=size_value.upper(),
                 category_scope=category_scope,
+                confidence=confidence
+            )
+
+    def set_color_preference(
+        self,
+        workspace_id: int,
+        customer_id: str,
+        conversation_id: str,
+        color_value: str,
+        category_scope: str = "general",
+        confidence: float = 1.0
+    ):
+        query = """
+        MATCH (c:Customer {workspace_id: $workspace_id, id: $customer_id})
+        OPTIONAL MATCH (c)-[old_r:PREFERS_COLOR {status: 'current'}]->(old_pr:Preference {key: 'color'})
+        WHERE old_pr.category_scope = $category_scope AND old_pr.value <> $color_value
+        SET old_r.status = 'past', old_r.valid_to = datetime()
+
+        WITH c
+        MERGE (pr:Preference {key: 'color', value: $color_value, category_scope: $category_scope})
+
+        MERGE (c)-[r:PREFERS_COLOR {status: 'current'}]->(pr)
+        ON CREATE SET
+            r.valid_from = datetime(),
+            r.confidence = $confidence,
+            r.source_conversation_id = $conversation_id
+        ON MATCH SET
+            r.last_confirmed_at = datetime(),
+            r.confidence = $confidence
+        """
+        driver = self.get_driver()
+        with driver.session(database=config.NEO4J_DATABASE) as session:
+            session.run(
+                query,
+                workspace_id=workspace_id,
+                customer_id=customer_id,
+                conversation_id=conversation_id,
+                color_value=color_value,
+                category_scope=category_scope,
+                confidence=confidence
+            )
+
+    def set_delivery_preference(
+        self,
+        workspace_id: int,
+        customer_id: str,
+        conversation_id: str,
+        delivery_instruction: str,
+        confidence: float = 1.0
+    ):
+        query = """
+        MATCH (c:Customer {workspace_id: $workspace_id, id: $customer_id})
+        OPTIONAL MATCH (c)-[old_r:PREFERS_DELIVERY {status: 'current'}]->(old_pr:Preference {key: 'delivery'})
+        SET old_r.status = 'past', old_r.valid_to = datetime()
+
+        WITH c
+        MERGE (pr:Preference {key: 'delivery', value: $delivery_instruction, category_scope: 'delivery'})
+
+        MERGE (c)-[r:PREFERS_DELIVERY {status: 'current'}]->(pr)
+        ON CREATE SET
+            r.valid_from = datetime(),
+            r.confidence = $confidence,
+            r.source_conversation_id = $conversation_id
+        ON MATCH SET
+            r.last_confirmed_at = datetime(),
+            r.confidence = $confidence
+        """
+        driver = self.get_driver()
+        with driver.session(database=config.NEO4J_DATABASE) as session:
+            session.run(
+                query,
+                workspace_id=workspace_id,
+                customer_id=customer_id,
+                conversation_id=conversation_id,
+                delivery_instruction=delivery_instruction,
                 confidence=confidence
             )
 
@@ -275,14 +347,18 @@ class Neo4jClient:
         query = """
         MATCH (c:Customer {workspace_id: $workspace_id, id: $customer_id})
         OPTIONAL MATCH (c)-[r_pay:PREFERS]->(p:PaymentMethod)
-        OPTIONAL MATCH (c)-[r_size:PREFERS_SIZE]->(pr:Preference)
+        OPTIONAL MATCH (c)-[r_size:PREFERS_SIZE]->(pr_size:Preference {key: 'size'})
+        OPTIONAL MATCH (c)-[r_col:PREFERS_COLOR]->(pr_col:Preference {key: 'color'})
+        OPTIONAL MATCH (c)-[r_del:PREFERS_DELIVERY]->(pr_del:Preference {key: 'delivery'})
         OPTIONAL MATCH (c)-[r_order:DISCUSSED]->(o:Order)
         OPTIONAL MATCH (c)-[r_prod:INTERESTED_IN]->(prod:Product)
         OPTIONAL MATCH (c)-[r_iss:REPORTED]->(iss:Issue)
 
         RETURN 
             collect(DISTINCT {type: 'preference', relation: 'PREFERS', object: p.name, code: p.code, status: r_pay.status, confidence: 1.0}) AS payment_prefs,
-            collect(DISTINCT {type: 'preference', relation: 'PREFERS_SIZE', object: pr.value, scope: pr.category_scope, status: r_size.status, confidence: r_size.confidence}) AS size_prefs,
+            collect(DISTINCT {type: 'preference', relation: 'PREFERS_SIZE', object: pr_size.value, scope: pr_size.category_scope, status: r_size.status, confidence: r_size.confidence}) AS size_prefs,
+            collect(DISTINCT {type: 'preference', relation: 'PREFERS_COLOR', object: pr_col.value, scope: pr_col.category_scope, status: r_col.status, confidence: r_col.confidence}) AS color_prefs,
+            collect(DISTINCT {type: 'preference', relation: 'PREFERS_DELIVERY', object: pr_del.value, status: r_del.status, confidence: r_del.confidence}) AS delivery_prefs,
             collect(DISTINCT {type: 'historical_action', relation: 'DISCUSSED', object: o.id, reason: r_order.reason, status: 'past', confidence: 1.0}) AS discussed_orders,
             collect(DISTINCT {type: 'intent', relation: 'INTERESTED_IN', object: prod.title, strength: r_prod.intent_strength, status: 'current', confidence: 0.9}) AS interested_products,
             collect(DISTINCT {type: 'issue', relation: 'REPORTED', object: iss.category, description: iss.description, status: iss.status, confidence: 1.0}) AS reported_issues
@@ -295,28 +371,28 @@ class Neo4jClient:
                 return []
 
             memories = []
-            # Add payment preferences (filter out empty null objects)
             for item in record["payment_prefs"]:
                 if item.get("object"):
                     memories.append(item)
-            # Add size preferences
             for item in record["size_prefs"]:
                 if item.get("object"):
                     memories.append(item)
-            # Add discussed orders
+            for item in record["color_prefs"]:
+                if item.get("object"):
+                    memories.append(item)
+            for item in record["delivery_prefs"]:
+                if item.get("object"):
+                    memories.append(item)
             for item in record["discussed_orders"]:
                 if item.get("object"):
                     memories.append(item)
-            # Add interested products
             for item in record["interested_products"]:
                 if item.get("object"):
                     memories.append(item)
-            # Add issues
             for item in record["reported_issues"]:
                 if item.get("object"):
                     memories.append(item)
 
-            # Sort current preferences first, followed by recent interactions
             def sort_key(m):
                 return (0 if m.get("status") == "current" else 1, 0 if m.get("type") == "preference" else 1)
 

@@ -65,3 +65,16 @@ class HealthResponse(BaseModel):
     service: str
     version: str
     neo4j: Dict[str, Any]
+
+class CustomerMemoryResponse(BaseModel):
+    customer_id: str
+    workspace_id: int
+    nodes_count: int
+    edges_count: int
+    memories: List[MemorySearchResultItem]
+
+class DeleteMemoryResponse(BaseModel):
+    success: bool
+    deleted_nodes: int = 0
+    deleted_edges: int = 0
+    message: str

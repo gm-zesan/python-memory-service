@@ -9,6 +9,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from app.main import app
 from app.neo4j_client import neo4j_client
 from app.config import config
+from app.models import MessageItem
+from app.memory_extractor import memory_extractor
 
 class TestMemoryService(unittest.TestCase):
     @classmethod
@@ -169,7 +171,7 @@ class TestMemoryService(unittest.TestCase):
             )
             count = result.single()["total"]
             self.assertEqual(count, 1)
-        print(f"✓ Duplicate merging verified: Repeated mentions merged into 1 canonical Order node")
+        print("✓ Duplicate merging verified: Repeated mentions merged into 1 canonical Order node")
 
     def test_07_reported_issue_tracking(self):
         self.client.post("/memory/ingest", json={
@@ -196,7 +198,6 @@ class TestMemoryService(unittest.TestCase):
         print("✓ Issue tracking verified: Support grievance recorded as active :Issue node")
 
     def test_08_anti_leakage_sanitization(self):
-        from app.memory_extractor import memory_extractor
         dirty_text = "Here is my credit card 4532 1234 5678 9012 and my secret password: mypass123 and OTP: 829104"
         clean_text = memory_extractor.sanitize_text(dirty_text)
         
@@ -244,6 +245,61 @@ class TestMemoryService(unittest.TestCase):
         })
         self.assertFalse(search_res.json()["has_memories"])
         print("✓ Deletion verified: All memory nodes and edges purged cleanly")
+
+    def test_11_color_and_delivery_preference_extraction(self):
+        cust_id = "test_customer_color_deliv_77"
+        neo4j_client.delete_customer_memory(self.test_workspace_id, cust_id)
+
+        payload = {
+            "workspace_id": self.test_workspace_id,
+            "customer_id": cust_id,
+            "conversation_id": "conv_color_deliv_1",
+            "channel": "web",
+            "messages": [
+                {"direction": "inbound", "body": "Amar navy blue color pochondo. Deliver after 7 PM please."}
+            ]
+        }
+        res = self.client.post("/memory/ingest", json=payload)
+        self.assertEqual(res.status_code, 200)
+
+        search_res = self.client.post("/memory/search", json={
+            "workspace_id": self.test_workspace_id,
+            "customer_id": cust_id,
+            "query": "preferences",
+            "limit": 10
+        })
+        data = search_res.json()
+        self.assertTrue(data["has_memories"])
+        self.assertIn("Navy Blue", data["formatted_memory_context"])
+        self.assertIn("7 PM", data["formatted_memory_context"])
+
+        # Clean up
+        neo4j_client.delete_customer_memory(self.test_workspace_id, cust_id)
+        print("✓ Color & delivery preferences verified: PREFERS_COLOR and PREFERS_DELIVERY recorded correctly")
+
+    def test_12_chit_chat_filter(self):
+        msgs = [
+            MessageItem(direction="inbound", body="Hello! Good morning. How are you?"),
+            MessageItem(direction="inbound", body="Thank you so much! Bye."),
+        ]
+        extracted = memory_extractor.extract_from_messages(msgs)
+        self.assertIsNone(extracted["payment_preference"])
+        self.assertIsNone(extracted["size_preference"])
+        self.assertIsNone(extracted["color_preference"])
+        self.assertEqual(len(extracted["discussed_orders"]), 0)
+        self.assertEqual(len(extracted["reported_issues"]), 0)
+        print("✓ Chit-chat filter verified: Polite pleasantries do not create spurious memory nodes")
+
+    def test_13_llm_extractor_graceful_fallback(self):
+        # Even with empty API key, extraction finishes cleanly using fast-path
+        msgs = [
+            MessageItem(direction="inbound", body="I prefer bKash payment and size 42."),
+        ]
+        extracted = memory_extractor.extract_from_messages(msgs)
+        self.assertIsNotNone(extracted["payment_preference"])
+        self.assertEqual(extracted["payment_preference"]["code"], "bkash")
+        self.assertEqual(extracted["size_preference"], "42")
+        print("✓ Dual-mode fallback verified: Fast-path extracts accurately when LLM is offline")
 
 if __name__ == "__main__":
     unittest.main()
