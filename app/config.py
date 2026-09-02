@@ -1,5 +1,6 @@
 import os
 from typing import Dict, Any
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -38,6 +39,13 @@ class MemoryConfig:
                 "base_url": os.getenv("DEEPSEEK_URL", "https://api.deepseek.com"),
                 "api_key": os.getenv("DEEPSEEK_API_KEY", ""),
                 "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+            }
+        elif provider == "openai":
+            return {
+                "provider": "openai",
+                "base_url": os.getenv("OPENAI_URL", "https://api.openai.com/v1"),
+                "api_key": os.getenv("OPENAI_API_KEY", ""),
+                "model": os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
             }
         elif provider in ("ollama", "local", "vllm"):
             return {
