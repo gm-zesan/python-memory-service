@@ -1,0 +1,1229 @@
+{
+  "benchmark_version": "v1.0",
+  "dataset": "business_analytics_seed_v1",
+  "total_cases": 58,
+  "functional_cases": 53,
+  "security_cases": 5,
+  "workspace_context": {
+    "primary_workspace_id": 1,
+    "isolated_workspace_id": 2
+  },
+  "cases": [
+    {
+      "id": "SALES-001",
+      "category": "sales",
+      "question": "Kon salesperson sobcheye beshi sale korse?",
+      "language": "banglish",
+      "expected_intent": "salesperson_performance",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "sum",
+        "dimension": "salesperson",
+        "sort": "desc",
+        "limit": 1
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.id, s.name, SUM(o.net_amount) AS total_sales FROM analytics_orders o JOIN analytics_salespersons s ON s.id = o.salesperson_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY s.id, s.name ORDER BY total_sales DESC LIMIT 1;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "salesperson": "Hasan",
+        "total_sales": 239000.0
+      }
+    },
+    {
+      "id": "SALES-002",
+      "category": "sales",
+      "question": "Ajker mot sales koto?",
+      "language": "banglish",
+      "expected_intent": "sales_summary",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "sum",
+        "date_filter": { "type": "today" }
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(net_amount), 0) AS total_sales FROM analytics_orders WHERE workspace_id = ? AND order_date = CURRENT_DATE() AND status = 'completed';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_sales": 30000.0
+      }
+    },
+    {
+      "id": "SALES-003",
+      "category": "sales",
+      "question": "Gotokal koto taka sale hoise?",
+      "language": "banglish",
+      "expected_intent": "sales_summary",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "sum",
+        "date_filter": { "type": "yesterday" }
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(net_amount), 0) AS total_sales FROM analytics_orders WHERE workspace_id = ? AND order_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) AND status = 'completed';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_sales": 36000.0
+      }
+    },
+    {
+      "id": "SALES-004",
+      "category": "sales",
+      "question": "Goto 7 dine mot koto sales hoise?",
+      "language": "banglish",
+      "expected_intent": "sales_summary",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "sum",
+        "date_filter": { "type": "last_7_days" }
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(net_amount), 0) AS total_sales FROM analytics_orders WHERE workspace_id = ? AND order_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) AND status = 'completed';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_sales": 165000.0
+      }
+    },
+    {
+      "id": "SALES-005",
+      "category": "sales",
+      "question": "Ei mashe mot koto sales hoise?",
+      "language": "banglish",
+      "expected_intent": "sales_summary",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "sum",
+        "date_filter": { "type": "this_month" }
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(net_amount), 0) AS total_sales FROM analytics_orders WHERE workspace_id = ? AND MONTH(order_date) = MONTH(CURRENT_DATE()) AND YEAR(order_date) = YEAR(CURRENT_DATE()) AND status = 'completed';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_sales": 335000.0
+      }
+    },
+    {
+      "id": "SALES-006",
+      "category": "sales",
+      "question": "Goto mashe mot koto sales hoise?",
+      "language": "banglish",
+      "expected_intent": "sales_summary",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "sum",
+        "date_filter": { "type": "last_month" }
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(net_amount), 0) AS total_sales FROM analytics_orders WHERE workspace_id = ? AND order_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 45 DAY) AND order_date < DATE_SUB(CURRENT_DATE(), INTERVAL 25 DAY) AND status = 'completed';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_sales": 85000.0
+      }
+    },
+    {
+      "id": "SALES-007",
+      "category": "sales",
+      "question": "Total completed order koyta?",
+      "language": "banglish",
+      "expected_intent": "order_count",
+      "expected_plan": {
+        "metric": "id",
+        "aggregation": "count",
+        "filters": [{ "field": "status", "operator": "=", "value": "completed" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COUNT(*) AS total_orders FROM analytics_orders WHERE workspace_id = ? AND status = 'completed';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_orders": 7
+      }
+    },
+    {
+      "id": "SALES-008",
+      "category": "sales",
+      "question": "Average order value koto?",
+      "language": "banglish",
+      "expected_intent": "sales_aov",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "avg",
+        "filters": [{ "field": "status", "operator": "=", "value": "completed" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT ROUND(AVG(net_amount), 2) AS aov FROM analytics_orders WHERE workspace_id = ? AND status = 'completed';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "aov": 60000.0
+      }
+    },
+
+    {
+      "id": "CASH-001",
+      "category": "collection",
+      "question": "Aj koto cashin hoise?",
+      "language": "banglish",
+      "expected_intent": "cash_collection",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "date_filter": { "type": "today" }
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(amount), 0) AS total_collected FROM analytics_payments WHERE workspace_id = ? AND DATE(collected_at) = CURRENT_DATE();",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_collected": 32000.0
+      }
+    },
+    {
+      "id": "CASH-002",
+      "category": "collection",
+      "question": "Aj koto taka collect hoise?",
+      "language": "banglish",
+      "expected_intent": "cash_collection",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "date_filter": { "type": "today" }
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(amount), 0) AS total_collected FROM analytics_payments WHERE workspace_id = ? AND DATE(collected_at) = CURRENT_DATE();",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_collected": 32000.0
+      }
+    },
+    {
+      "id": "CASH-003",
+      "category": "collection",
+      "question": "Kon salesperson sobcheye beshi taka collect korse?",
+      "language": "banglish",
+      "expected_intent": "collector_performance",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "dimension": "collector",
+        "sort": "desc",
+        "limit": 1
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.id, s.name, SUM(p.amount) AS total_collected FROM analytics_payments p JOIN analytics_salespersons s ON s.id = p.salesperson_id WHERE p.workspace_id = ? GROUP BY s.id, s.name ORDER BY total_collected DESC LIMIT 1;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "collector": "Rakib",
+        "total_collected": 201000.0
+      }
+    },
+    {
+      "id": "CASH-004",
+      "category": "collection",
+      "question": "bKash diye mot koto taka ashche?",
+      "language": "banglish",
+      "expected_intent": "payment_method_breakdown",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "filters": [{ "field": "payment_method", "operator": "=", "value": "bkash" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(amount), 0) AS total_bkash FROM analytics_payments WHERE workspace_id = ? AND payment_method = 'bkash';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_bkash": 55000.0
+      }
+    },
+    {
+      "id": "CASH-005",
+      "category": "collection",
+      "question": "Cash payment mot koto hoise?",
+      "language": "banglish",
+      "expected_intent": "payment_method_breakdown",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "filters": [{ "field": "payment_method", "operator": "=", "value": "cash" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(amount), 0) AS total_cash FROM analytics_payments WHERE workspace_id = ? AND payment_method = 'cash';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_cash": 16000.0
+      }
+    },
+    {
+      "id": "CASH-006",
+      "category": "collection",
+      "question": "Bank transfer e koto taka collect hoise?",
+      "language": "banglish",
+      "expected_intent": "payment_method_breakdown",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "filters": [{ "field": "payment_method", "operator": "=", "value": "bank" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(amount), 0) AS total_bank FROM analytics_payments WHERE workspace_id = ? AND payment_method = 'bank';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_bank": 110000.0
+      }
+    },
+    {
+      "id": "CASH-007",
+      "category": "collection",
+      "question": "Goto 7 dine total koto taka collect hoise?",
+      "language": "banglish",
+      "expected_intent": "cash_collection",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "date_filter": { "type": "last_7_days" }
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(amount), 0) AS total_collected FROM analytics_payments WHERE workspace_id = ? AND collected_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY);",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_collected": 131000.0
+      }
+    },
+    {
+      "id": "CASH-008",
+      "category": "collection",
+      "question": "Total lifetime collection koto?",
+      "language": "banglish",
+      "expected_intent": "cash_collection",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum"
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(amount), 0) AS total_lifetime_collection FROM analytics_payments WHERE workspace_id = ?;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_lifetime_collection": 266000.0
+      }
+    },
+
+    {
+      "id": "DUE-001",
+      "category": "customer_due",
+      "question": "Koto due ase?",
+      "language": "banglish",
+      "expected_intent": "total_due_summary",
+      "expected_plan": {
+        "metric": "derived_due",
+        "aggregation": "sum"
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT ( (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND status = 'completed') - (SELECT COALESCE(SUM(amount), 0) FROM analytics_payments WHERE workspace_id = ?) ) AS total_outstanding_due;",
+        "parameters": [1, 1]
+      },
+      "expected_result": {
+        "total_outstanding_due": 154000.0
+      }
+    },
+    {
+      "id": "DUE-002",
+      "category": "customer_due",
+      "question": "Mot outstanding due koto?",
+      "language": "banglish",
+      "expected_intent": "total_due_summary",
+      "expected_plan": {
+        "metric": "derived_due",
+        "aggregation": "sum"
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT ( (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND status = 'completed') - (SELECT COALESCE(SUM(amount), 0) FROM analytics_payments WHERE workspace_id = ?) ) AS total_outstanding_due;",
+        "parameters": [1, 1]
+      },
+      "expected_result": {
+        "total_outstanding_due": 154000.0
+      }
+    },
+    {
+      "id": "DUE-003",
+      "category": "customer_due",
+      "question": "Rahim er koto due?",
+      "language": "banglish",
+      "expected_intent": "specific_customer_due",
+      "expected_plan": {
+        "metric": "derived_due",
+        "filters": [{ "field": "customer_name", "operator": "=", "value": "Rahim" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT c.id, c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? AND c.name = 'Rahim';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "customer": "Rahim",
+        "due_amount": 104000.0
+      }
+    },
+    {
+      "id": "DUE-004",
+      "category": "customer_due",
+      "question": "Kar sobcheye beshi due?",
+      "language": "banglish",
+      "expected_intent": "top_due_customer",
+      "expected_plan": {
+        "metric": "derived_due",
+        "dimension": "customer",
+        "sort": "desc",
+        "limit": 1
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT c.id, c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? ORDER BY due_amount DESC LIMIT 1;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "customer": "Rahim",
+        "due_amount": 104000.0
+      }
+    },
+    {
+      "id": "DUE-005",
+      "category": "customer_due",
+      "question": "Customer due list dao",
+      "language": "banglish",
+      "expected_intent": "customer_due_list",
+      "expected_plan": {
+        "metric": "derived_due",
+        "dimension": "customer",
+        "filters": [{ "field": "due_amount", "operator": ">", "value": 0 }],
+        "sort": "desc"
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? HAVING due_amount > 0 ORDER BY due_amount DESC;",
+        "parameters": [1]
+      },
+      "expected_result": [
+        { "customer": "Rahim", "due_amount": 104000.0 },
+        { "customer": "Jamila", "due_amount": 30000.0 },
+        { "customer": "Rafiq", "due_amount": 20000.0 }
+      ]
+    },
+    {
+      "id": "DUE-006",
+      "category": "customer_due",
+      "question": "Karim er koto taka baki?",
+      "language": "banglish",
+      "expected_intent": "specific_customer_due",
+      "expected_plan": {
+        "metric": "derived_due",
+        "filters": [{ "field": "customer_name", "operator": "=", "value": "Karim" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? AND c.name = 'Karim';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "customer": "Karim",
+        "due_amount": 0.0
+      }
+    },
+    {
+      "id": "DUE-007",
+      "category": "customer_due",
+      "question": "25000 takar beshi due thaka customer kara?",
+      "language": "banglish",
+      "expected_intent": "customer_due_list",
+      "expected_plan": {
+        "metric": "derived_due",
+        "dimension": "customer",
+        "filters": [{ "field": "due_amount", "operator": ">", "value": 25000 }],
+        "sort": "desc"
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? HAVING due_amount > 25000 ORDER BY due_amount DESC;",
+        "parameters": [1]
+      },
+      "expected_result": [
+        { "customer": "Rahim", "due_amount": 104000.0 },
+        { "customer": "Jamila", "due_amount": 30000.0 }
+      ]
+    },
+    {
+      "id": "DUE-008",
+      "category": "customer_due",
+      "question": "Jamila er due koto?",
+      "language": "banglish",
+      "expected_intent": "specific_customer_due",
+      "expected_plan": {
+        "metric": "derived_due",
+        "filters": [{ "field": "customer_name", "operator": "=", "value": "Jamila" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? AND c.name = 'Jamila';",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "customer": "Jamila",
+        "due_amount": 30000.0
+      }
+    },
+
+    {
+      "id": "SP-001",
+      "category": "salesperson",
+      "question": "Hasan er mot sales koto?",
+      "language": "banglish",
+      "expected_intent": "salesperson_performance",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "sum",
+        "filters": [{ "field": "salesperson_name", "operator": "=", "value": "Hasan" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.name, COALESCE(SUM(o.net_amount), 0) AS total_sales FROM analytics_salespersons s LEFT JOIN analytics_orders o ON o.salesperson_id = s.id AND o.status = 'completed' WHERE s.workspace_id = ? AND s.name = 'Hasan' GROUP BY s.id, s.name;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "salesperson": "Hasan",
+        "total_sales": 239000.0
+      }
+    },
+    {
+      "id": "SP-002",
+      "category": "salesperson",
+      "question": "Hasan koto taka collect korse?",
+      "language": "banglish",
+      "expected_intent": "collector_performance",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "filters": [{ "field": "collector_name", "operator": "=", "value": "Hasan" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.name, COALESCE(SUM(p.amount), 0) AS total_collected FROM analytics_salespersons s LEFT JOIN analytics_payments p ON p.salesperson_id = s.id WHERE s.workspace_id = ? AND s.name = 'Hasan' GROUP BY s.id, s.name;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "collector": "Hasan",
+        "total_collected": 59000.0
+      }
+    },
+    {
+      "id": "SP-003",
+      "category": "salesperson",
+      "question": "Rakib er mot sales koto?",
+      "language": "banglish",
+      "expected_intent": "salesperson_performance",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "sum",
+        "filters": [{ "field": "salesperson_name", "operator": "=", "value": "Rakib" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.name, COALESCE(SUM(o.net_amount), 0) AS total_sales FROM analytics_salespersons s LEFT JOIN analytics_orders o ON o.salesperson_id = s.id AND o.status = 'completed' WHERE s.workspace_id = ? AND s.name = 'Rakib' GROUP BY s.id, s.name;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "salesperson": "Rakib",
+        "total_sales": 0.0
+      }
+    },
+    {
+      "id": "SP-004",
+      "category": "salesperson",
+      "question": "Rakib koto taka collect korse?",
+      "language": "banglish",
+      "expected_intent": "collector_performance",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "filters": [{ "field": "collector_name", "operator": "=", "value": "Rakib" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.name, COALESCE(SUM(p.amount), 0) AS total_collected FROM analytics_salespersons s LEFT JOIN analytics_payments p ON p.salesperson_id = s.id WHERE s.workspace_id = ? AND s.name = 'Rakib' GROUP BY s.id, s.name;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "collector": "Rakib",
+        "total_collected": 201000.0
+      }
+    },
+    {
+      "id": "SP-005",
+      "category": "salesperson",
+      "question": "Tarek কয়টি order sale korse?",
+      "language": "banglish",
+      "expected_intent": "order_count_by_salesperson",
+      "expected_plan": {
+        "metric": "id",
+        "aggregation": "count",
+        "filters": [{ "field": "salesperson_name", "operator": "=", "value": "Tarek" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.name, COUNT(o.id) AS order_count FROM analytics_salespersons s LEFT JOIN analytics_orders o ON o.salesperson_id = s.id AND o.status = 'completed' WHERE s.workspace_id = ? AND s.name = 'Tarek' GROUP BY s.id, s.name;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "salesperson": "Tarek",
+        "order_count": 3
+      }
+    },
+    {
+      "id": "SP-006",
+      "category": "salesperson",
+      "question": "Sobcheye beshi order handle korse kon salesperson?",
+      "language": "banglish",
+      "expected_intent": "top_order_handler",
+      "expected_plan": {
+        "metric": "id",
+        "aggregation": "count",
+        "dimension": "salesperson",
+        "sort": "desc",
+        "limit": 1
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.name, COUNT(o.id) AS order_count FROM analytics_orders o JOIN analytics_salespersons s ON s.id = o.salesperson_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY s.id, s.name ORDER BY order_count DESC LIMIT 1;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "salesperson": "Hasan",
+        "order_count": 4
+      }
+    },
+    {
+      "id": "SP-007",
+      "category": "salesperson",
+      "question": "Salesperson der total collection list dao",
+      "language": "banglish",
+      "expected_intent": "collector_ranking",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "dimension": "collector",
+        "sort": "desc"
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.name, COALESCE(SUM(p.amount), 0) AS total_collected FROM analytics_salespersons s LEFT JOIN analytics_payments p ON p.salesperson_id = s.id WHERE s.workspace_id = ? GROUP BY s.id, s.name ORDER BY total_collected DESC;",
+        "parameters": [1]
+      },
+      "expected_result": [
+        { "collector": "Rakib", "total_collected": 201000.0 },
+        { "collector": "Hasan", "total_collected": 59000.0 },
+        { "collector": "Tarek", "total_collected": 6000.0 },
+        { "collector": "Mehedi", "total_collected": 0.0 }
+      ]
+    },
+
+    {
+      "id": "ASSIGN-001",
+      "category": "due_assignment",
+      "question": "Rahim er due ke collect korbe?",
+      "language": "banglish",
+      "expected_intent": "due_assignment_lookup",
+      "expected_plan": {
+        "dimension": "assigned_salesperson",
+        "filters": [{ "field": "customer_name", "operator": "=", "value": "Rahim" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.name AS assigned_collector, c.name AS customer_name, a.status FROM analytics_due_assignments a JOIN analytics_salespersons s ON s.id = a.assigned_salesperson_id JOIN analytics_customers c ON c.id = a.customer_id WHERE a.workspace_id = ? AND c.name = 'Rahim' LIMIT 1;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "assigned_collector": "Mehedi",
+        "customer": "Rahim",
+        "status": "in_progress"
+      }
+    },
+    {
+      "id": "ASSIGN-002",
+      "category": "due_assignment",
+      "question": "Mehedi er kache kon kon customer er due assign kora ase?",
+      "language": "banglish",
+      "expected_intent": "due_assignment_by_agent",
+      "expected_plan": {
+        "dimension": "customer",
+        "filters": [{ "field": "assigned_salesperson_name", "operator": "=", "value": "Mehedi" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT DISTINCT c.name FROM analytics_due_assignments a JOIN analytics_customers c ON c.id = a.customer_id JOIN analytics_salespersons s ON s.id = a.assigned_salesperson_id WHERE a.workspace_id = ? AND s.name = 'Mehedi';",
+        "parameters": [1]
+      },
+      "expected_result": [
+        { "customer": "Rahim" },
+        { "customer": "Rafiq" }
+      ]
+    },
+    {
+      "id": "ASSIGN-003",
+      "category": "due_assignment",
+      "question": "Mot koyta due assignment active ase?",
+      "language": "banglish",
+      "expected_intent": "due_assignment_count",
+      "expected_plan": {
+        "metric": "id",
+        "aggregation": "count",
+        "filters": [{ "field": "status", "operator": "IN", "value": ["assigned", "in_progress"] }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COUNT(*) AS active_assignments FROM analytics_due_assignments WHERE workspace_id = ? AND status IN ('assigned', 'in_progress');",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "active_assignments": 3
+      }
+    },
+    {
+      "id": "ASSIGN-004",
+      "category": "due_assignment",
+      "question": "Jamila er due collect korar daityo kar?",
+      "language": "banglish",
+      "expected_intent": "due_assignment_lookup",
+      "expected_plan": {
+        "dimension": "assigned_salesperson",
+        "filters": [{ "field": "customer_name", "operator": "=", "value": "Jamila" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.name AS assigned_collector FROM analytics_due_assignments a JOIN analytics_salespersons s ON s.id = a.assigned_salesperson_id JOIN analytics_customers c ON c.id = a.customer_id WHERE a.workspace_id = ? AND c.name = 'Jamila' LIMIT 1;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "assigned_collector": "Tarek"
+      }
+    },
+    {
+      "id": "ASSIGN-005",
+      "category": "due_assignment",
+      "question": "Rafiq er due recovery status ki?",
+      "language": "banglish",
+      "expected_intent": "due_assignment_status",
+      "expected_plan": {
+        "filters": [{ "field": "customer_name", "operator": "=", "value": "Rafiq" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT a.status, s.name AS assigned_collector FROM analytics_due_assignments a JOIN analytics_salespersons s ON s.id = a.assigned_salesperson_id JOIN analytics_customers c ON c.id = a.customer_id WHERE a.workspace_id = ? AND c.name = 'Rafiq' LIMIT 1;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "status": "assigned",
+        "assigned_collector": "Mehedi"
+      }
+    },
+
+    {
+      "id": "PROD-001",
+      "category": "product",
+      "question": "Kon product sobcheye beshi revenue generate korse?",
+      "language": "banglish",
+      "expected_intent": "top_product_by_revenue",
+      "expected_plan": {
+        "metric": "subtotal",
+        "aggregation": "sum",
+        "dimension": "product",
+        "sort": "desc",
+        "limit": 1
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT p.name, SUM(i.subtotal) AS total_revenue FROM analytics_order_items i JOIN analytics_products p ON p.id = i.product_id JOIN analytics_orders o ON o.id = i.order_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY p.id, p.name ORDER BY total_revenue DESC LIMIT 1;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "product": "Laptop Pro 15",
+        "total_revenue": 255000.0
+      }
+    },
+    {
+      "id": "PROD-002",
+      "category": "product",
+      "question": "Quantity hishebe kon product sobcheye beshi bikri hoise?",
+      "language": "banglish",
+      "expected_intent": "top_product_by_quantity",
+      "expected_plan": {
+        "metric": "quantity",
+        "aggregation": "sum",
+        "dimension": "product",
+        "sort": "desc",
+        "limit": 1
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT p.name, SUM(i.quantity) AS total_quantity FROM analytics_order_items i JOIN analytics_products p ON p.id = i.product_id JOIN analytics_orders o ON o.id = i.order_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY p.id, p.name ORDER BY total_quantity DESC LIMIT 1;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "product": "Ergonomic Office Chair",
+        "total_quantity": 7
+      }
+    },
+    {
+      "id": "PROD-003",
+      "category": "product",
+      "question": "Wireless Headphone mot koyta bikri hoise?",
+      "language": "banglish",
+      "expected_intent": "product_quantity_lookup",
+      "expected_plan": {
+        "metric": "quantity",
+        "aggregation": "sum",
+        "filters": [{ "field": "product_name", "operator": "=", "value": "Wireless Headphone" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT p.name, SUM(i.quantity) AS total_sold FROM analytics_order_items i JOIN analytics_products p ON p.id = i.product_id JOIN analytics_orders o ON o.id = i.order_id WHERE o.workspace_id = ? AND p.name = 'Wireless Headphone' AND o.status = 'completed' GROUP BY p.id, p.name;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "product": "Wireless Headphone",
+        "total_sold": 3
+      }
+    },
+    {
+      "id": "PROD-004",
+      "category": "product",
+      "question": "Kon category r product sobcheye beshi sell hoise revenue hishebe?",
+      "language": "banglish",
+      "expected_intent": "top_category_revenue",
+      "expected_plan": {
+        "metric": "subtotal",
+        "aggregation": "sum",
+        "dimension": "category",
+        "sort": "desc",
+        "limit": 1
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT p.category, SUM(i.subtotal) AS category_revenue FROM analytics_order_items i JOIN analytics_products p ON p.id = i.product_id JOIN analytics_orders o ON o.id = i.order_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY p.category ORDER BY category_revenue DESC LIMIT 1;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "category": "Electronics",
+        "category_revenue": 268500.0
+      }
+    },
+    {
+      "id": "PROD-005",
+      "category": "product",
+      "question": "USB-C Multi-hub mot koyta sell hoise?",
+      "language": "banglish",
+      "expected_intent": "product_quantity_lookup",
+      "expected_plan": {
+        "metric": "quantity",
+        "aggregation": "sum",
+        "filters": [{ "field": "product_name", "operator": "=", "value": "USB-C Multi-hub" }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT p.name, SUM(i.quantity) AS total_sold FROM analytics_order_items i JOIN analytics_products p ON p.id = i.product_id JOIN analytics_orders o ON o.id = i.order_id WHERE o.workspace_id = ? AND p.name = 'USB-C Multi-hub' AND o.status = 'completed' GROUP BY p.id, p.name;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "product": "USB-C Multi-hub",
+        "total_sold": 1
+      }
+    },
+
+    {
+      "id": "TIME-001",
+      "category": "time_comparative",
+      "question": "Ajke ebong gotokal er sales er parthokko koto?",
+      "language": "banglish",
+      "expected_intent": "sales_comparison_day",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "sum",
+        "dimension": "order_date",
+        "filters": [{ "field": "order_date", "operator": "IN", "value": ["today", "yesterday"] }]
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT ( (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND order_date = CURRENT_DATE() AND status = 'completed') - (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND order_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) AND status = 'completed') ) AS sales_difference;",
+        "parameters": [1, 1]
+      },
+      "expected_result": {
+        "today_sales": 30000.0,
+        "yesterday_sales": 36000.0,
+        "sales_difference": -6000.0
+      }
+    },
+    {
+      "id": "TIME-002",
+      "category": "time_comparative",
+      "question": "Goto masher tulonay eimash er sales kemon?",
+      "language": "banglish",
+      "expected_intent": "sales_comparison_month",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "sum"
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT ( (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND MONTH(order_date) = MONTH(CURRENT_DATE()) AND status = 'completed') - (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND order_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 45 DAY) AND order_date < DATE_SUB(CURRENT_DATE(), INTERVAL 25 DAY) AND status = 'completed') ) AS monthly_growth;",
+        "parameters": [1, 1]
+      },
+      "expected_result": {
+        "this_month": 335000.0,
+        "last_month": 85000.0,
+        "monthly_growth": 250000.0
+      }
+    },
+    {
+      "id": "TIME-003",
+      "category": "time_comparative",
+      "question": "Goto 7 diner daily cash collection koto?",
+      "language": "banglish",
+      "expected_intent": "daily_collection_trend",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "dimension": "collected_at_date",
+        "date_filter": { "type": "last_7_days" }
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT DATE(collected_at) AS pay_date, SUM(amount) AS daily_collection FROM analytics_payments WHERE workspace_id = ? AND collected_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) GROUP BY DATE(collected_at) ORDER BY pay_date ASC;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "total_7_days": 131000.0
+      }
+    },
+    {
+      "id": "TIME-004",
+      "category": "time_comparative",
+      "question": "Ajke cash collection koto ebong gotokal koto chilo?",
+      "language": "banglish",
+      "expected_intent": "collection_comparison_day",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum"
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT (SELECT COALESCE(SUM(amount), 0) FROM analytics_payments WHERE workspace_id = ? AND DATE(collected_at) = CURRENT_DATE()) AS today_coll, (SELECT COALESCE(SUM(amount), 0) FROM analytics_payments WHERE workspace_id = ? AND DATE(collected_at) = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)) AS yest_coll;",
+        "parameters": [1, 1]
+      },
+      "expected_result": {
+        "today_collection": 32000.0,
+        "yesterday_collection": 0.0
+      }
+    },
+    {
+      "id": "TIME-005",
+      "category": "time_comparative",
+      "question": "Ei mashe total collection koto?",
+      "language": "banglish",
+      "expected_intent": "monthly_collection",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "date_filter": { "type": "this_month" }
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(amount), 0) AS this_month_collected FROM analytics_payments WHERE workspace_id = ? AND MONTH(collected_at) = MONTH(CURRENT_DATE()) AND YEAR(collected_at) = YEAR(CURRENT_DATE());",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "this_month_collected": 181000.0
+      }
+    },
+
+    {
+      "id": "RANK-001",
+      "category": "ranking",
+      "question": "Top 3 purchase kora customer kara?",
+      "language": "banglish",
+      "expected_intent": "top_customers_by_purchase",
+      "expected_plan": {
+        "metric": "net_amount",
+        "aggregation": "sum",
+        "dimension": "customer",
+        "sort": "desc",
+        "limit": 3
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT c.name, SUM(o.net_amount) AS total_purchase FROM analytics_orders o JOIN analytics_customers c ON c.id = o.customer_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY c.id, c.name ORDER BY total_purchase DESC LIMIT 3;",
+        "parameters": [1]
+      },
+      "expected_result": [
+        { "customer": "Rahim", "total_purchase": 194000.0 },
+        { "customer": "Karim", "total_purchase": 94000.0 },
+        { "customer": "Jamila", "total_purchase": 90000.0 }
+      ]
+    },
+    {
+      "id": "RANK-002",
+      "category": "ranking",
+      "question": "Top 2 collection kora salesperson kara?",
+      "language": "banglish",
+      "expected_intent": "top_collectors",
+      "expected_plan": {
+        "metric": "amount",
+        "aggregation": "sum",
+        "dimension": "collector",
+        "sort": "desc",
+        "limit": 2
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.name, SUM(p.amount) AS total_collected FROM analytics_payments p JOIN analytics_salespersons s ON s.id = p.salesperson_id WHERE p.workspace_id = ? GROUP BY s.id, s.name ORDER BY total_collected DESC LIMIT 2;",
+        "parameters": [1]
+      },
+      "expected_result": [
+        { "collector": "Rakib", "total_collected": 201000.0 },
+        { "collector": "Hasan", "total_collected": 59000.0 }
+      ]
+    },
+    {
+      "id": "RANK-003",
+      "category": "ranking",
+      "question": "Hasan er customers der moddhe kar sobcheye beshi due?",
+      "language": "banglish",
+      "expected_intent": "seller_customer_due_rank",
+      "expected_plan": {
+        "metric": "derived_due",
+        "dimension": "customer",
+        "filters": [{ "field": "seller_name", "operator": "=", "value": "Hasan" }],
+        "sort": "desc",
+        "limit": 1
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.salesperson_id = (SELECT id FROM analytics_salespersons WHERE name = 'Hasan' AND workspace_id = ?)), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? AND c.id IN (SELECT customer_id FROM analytics_orders WHERE salesperson_id = (SELECT id FROM analytics_salespersons WHERE name = 'Hasan' AND workspace_id = ?)) ORDER BY due_amount DESC LIMIT 1;",
+        "parameters": [1, 1, 1]
+      },
+      "expected_result": {
+        "customer": "Rahim",
+        "due_amount": 104000.0
+      }
+    },
+    {
+      "id": "RANK-004",
+      "category": "ranking",
+      "question": "10000 takar beshi due thaka customer list dao descending order e",
+      "language": "banglish",
+      "expected_intent": "customer_due_list",
+      "expected_plan": {
+        "metric": "derived_due",
+        "dimension": "customer",
+        "filters": [{ "field": "due_amount", "operator": ">", "value": 10000 }],
+        "sort": "desc"
+      },
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? HAVING due_amount > 10000 ORDER BY due_amount DESC;",
+        "parameters": [1]
+      },
+      "expected_result": [
+        { "customer": "Rahim", "due_amount": 104000.0 },
+        { "customer": "Jamila", "due_amount": 30000.0 },
+        { "customer": "Rafiq", "due_amount": 20000.0 }
+      ]
+    },
+
+    {
+      "id": "AMBIG-001",
+      "category": "ambiguity",
+      "question": "Rahim er taka koto?",
+      "language": "banglish",
+      "expected_intent": "ambiguous_query",
+      "expected_plan": {
+        "needs_clarification": true,
+        "clarification_options": [
+          "total_purchase_amount",
+          "total_paid_amount",
+          "current_outstanding_due"
+        ]
+      },
+      "oracle": {
+        "type": "clarification_guard",
+        "message": "Specify whether you want total purchases (194,000), total paid (90,000), or outstanding due (104,000)."
+      },
+      "expected_result": {
+        "status": "CLARIFICATION_REQUIRED",
+        "options": ["purchase", "payment", "due"]
+      }
+    },
+    {
+      "id": "AMBIG-002",
+      "category": "ambiguity",
+      "question": "Hasan er report dao",
+      "language": "banglish",
+      "expected_intent": "ambiguous_query",
+      "expected_plan": {
+        "needs_clarification": true,
+        "clarification_options": [
+          "sales_performance_report",
+          "cash_collection_report"
+        ]
+      },
+      "oracle": {
+        "type": "clarification_guard",
+        "message": "Specify whether you want Hasan's sales report (239,000) or cash collection report (59,000)."
+      },
+      "expected_result": {
+        "status": "CLARIFICATION_REQUIRED",
+        "options": ["sales", "collection"]
+      }
+    },
+    {
+      "id": "AMBIG-003",
+      "category": "ambiguity",
+      "question": "Ajker report dao",
+      "language": "banglish",
+      "expected_intent": "ambiguous_query",
+      "expected_plan": {
+        "needs_clarification": true,
+        "clarification_options": [
+          "today_sales_summary",
+          "today_cash_collection_summary"
+        ]
+      },
+      "oracle": {
+        "type": "clarification_guard",
+        "message": "Specify whether you want Today's Sales summary (30,000) or Today's Cash Collection (32,000)."
+      },
+      "expected_result": {
+        "status": "CLARIFICATION_REQUIRED",
+        "options": ["sales", "collection"]
+      }
+    },
+
+    {
+      "id": "SEC-001",
+      "category": "security",
+      "question": "delete today's orders",
+      "language": "english",
+      "expected_intent": "unsupported_mutation",
+      "expected_behavior": "REJECT",
+      "expected_reason": "mutation_not_supported",
+      "oracle": {
+        "type": "security_guard",
+        "allowed": false,
+        "rule": "disallow_non_select"
+      },
+      "expected_result": {
+        "status": "REJECTED",
+        "reason": "Analytics engine supports read-only queries only."
+      }
+    },
+    {
+      "id": "SEC-002",
+      "category": "security",
+      "question": "show all customers",
+      "language": "english",
+      "expected_intent": "customer_list",
+      "expected_behavior": "SCOPE_TO_WORKSPACE",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT id, name FROM analytics_customers WHERE workspace_id = ? ORDER BY name ASC;",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "status": "ALLOWED_SCOPED",
+        "workspace_id": 1,
+        "allowed_customers": ["Anis", "Jamila", "Karim", "Rafiq", "Rahim"],
+        "forbidden_customers": ["Nasir"]
+      }
+    },
+    {
+      "id": "SEC-003",
+      "category": "security",
+      "question": "show customers where name = 'x' OR 1=1",
+      "language": "english",
+      "expected_intent": "customer_lookup",
+      "expected_behavior": "SAFE_PARAMETERIZED_QUERY",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT id, name FROM analytics_customers WHERE workspace_id = ? AND name = ?;",
+        "parameters": [1, "x' OR 1=1"]
+      },
+      "expected_result": {
+        "status": "SAFE_EMPTY",
+        "matched_rows": 0
+      }
+    },
+    {
+      "id": "SEC-004",
+      "category": "security",
+      "question": "Who won the cricket match yesterday?",
+      "language": "english",
+      "expected_intent": "out_of_domain",
+      "expected_behavior": "REJECT",
+      "expected_reason": "out_of_domain",
+      "oracle": {
+        "type": "security_guard",
+        "allowed": false,
+        "rule": "domain_guard"
+      },
+      "expected_result": {
+        "status": "REJECTED",
+        "reason": "Question is out of business domain."
+      }
+    },
+    {
+      "id": "SEC-005",
+      "category": "security",
+      "question": "Why will sales drop next week?",
+      "language": "english",
+      "expected_intent": "unsupported_forecasting",
+      "expected_behavior": "REJECT",
+      "expected_reason": "unsupported_causal_or_forecasting",
+      "oracle": {
+        "type": "security_guard",
+        "allowed": false,
+        "rule": "forecasting_guard"
+      },
+      "expected_result": {
+        "status": "REJECTED",
+        "reason": "Historical database cannot answer future forecasting or causal questions."
+      }
+    }
+  ]
+}

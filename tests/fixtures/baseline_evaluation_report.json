@@ -1,0 +1,1886 @@
+{
+  "benchmark_version": "v1.0",
+  "dataset": "business_analytics_seed_v1",
+  "total_cases": 58,
+  "total_passed": 56,
+  "overall_accuracy_pct": 96.55,
+  "functional_cases": 53,
+  "functional_passed": 51,
+  "functional_accuracy_pct": 96.23,
+  "security_cases": 5,
+  "security_passed": 5,
+  "security_pass_rate_pct": 100.0,
+  "intent_accuracy_pct": 89.66,
+  "plan_accuracy_pct": 93.1,
+  "result_accuracy_pct": 96.55,
+  "latency_p50_ms": 3713.84,
+  "latency_p95_ms": 16929.17,
+  "avg_llm_time_ms": 6301.03,
+  "avg_db_time_ms": 29.83,
+  "category_breakdown": {
+    "sales": {
+      "total": 8,
+      "passed": 8
+    },
+    "collection": {
+      "total": 8,
+      "passed": 8
+    },
+    "customer_due": {
+      "total": 8,
+      "passed": 8
+    },
+    "salesperson": {
+      "total": 7,
+      "passed": 7
+    },
+    "due_assignment": {
+      "total": 5,
+      "passed": 5
+    },
+    "product": {
+      "total": 5,
+      "passed": 5
+    },
+    "time_comparative": {
+      "total": 5,
+      "passed": 5
+    },
+    "ranking": {
+      "total": 4,
+      "passed": 3
+    },
+    "ambiguity": {
+      "total": 3,
+      "passed": 2
+    },
+    "security": {
+      "total": 5,
+      "passed": 5
+    }
+  },
+  "case_details": [
+    {
+      "id": "SALES-001",
+      "category": "sales",
+      "question": "Kon salesperson sobcheye beshi sale korse?",
+      "expected_intent": "salesperson_performance",
+      "actual_intent": "salesperson_performance",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 10888.85,
+      "llm_latency_ms": 10863.22,
+      "db_latency_ms": 25.63,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.id, s.name, SUM(o.net_amount) AS total_sales FROM analytics_orders o JOIN analytics_salespersons s ON s.id = o.salesperson_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY s.id, s.name ORDER BY total_sales DESC LIMIT 1;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "id": 1,
+          "name": "Hasan",
+          "total_sales": 239000.0
+        }
+      ],
+      "expected_result": {
+        "salesperson": "Hasan",
+        "total_sales": 239000.0
+      }
+    },
+    {
+      "id": "SALES-002",
+      "category": "sales",
+      "question": "Ajker mot sales koto?",
+      "expected_intent": "sales_summary",
+      "actual_intent": "sales_summary",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 2583.88,
+      "llm_latency_ms": 2569.38,
+      "db_latency_ms": 14.5,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(net_amount), 0) AS total_sales FROM analytics_orders WHERE workspace_id = ? AND status = 'completed' AND order_date = CURRENT_DATE();",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "total_sales": 0.0
+        }
+      ],
+      "expected_result": {
+        "total_sales": 30000.0
+      }
+    },
+    {
+      "id": "SALES-003",
+      "category": "sales",
+      "question": "Gotokal koto taka sale hoise?",
+      "expected_intent": "sales_summary",
+      "actual_intent": "sales_summary",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 12001.0,
+      "llm_latency_ms": 11973.6,
+      "db_latency_ms": 27.4,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(net_amount), 0) AS total_sales FROM analytics_orders WHERE workspace_id = ? AND status = 'completed' AND order_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY);",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "total_sales": 30000.0
+        }
+      ],
+      "expected_result": {
+        "total_sales": 36000.0
+      }
+    },
+    {
+      "id": "SALES-004",
+      "category": "sales",
+      "question": "Goto 7 dine mot koto sales hoise?",
+      "expected_intent": "sales_summary",
+      "actual_intent": "sales_summary",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 4327.49,
+      "llm_latency_ms": 4311.75,
+      "db_latency_ms": 15.73,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(net_amount), 0) AS total_sales FROM analytics_orders WHERE workspace_id = ? AND status = 'completed' AND order_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY);",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "total_sales": 156000.0
+        }
+      ],
+      "expected_result": {
+        "total_sales": 165000.0
+      }
+    },
+    {
+      "id": "SALES-005",
+      "category": "sales",
+      "question": "Ei mashe mot koto sales hoise?",
+      "expected_intent": "sales_summary",
+      "actual_intent": "sales_summary",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 9268.78,
+      "llm_latency_ms": 9220.18,
+      "db_latency_ms": 48.59,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(net_amount), 0) AS total_sales FROM analytics_orders WHERE workspace_id = ? AND status = 'completed' AND MONTH(order_date) = MONTH(CURRENT_DATE()) AND YEAR(order_date) = YEAR(CURRENT_DATE());",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "total_sales": 165000.0
+        }
+      ],
+      "expected_result": {
+        "total_sales": 335000.0
+      }
+    },
+    {
+      "id": "SALES-006",
+      "category": "sales",
+      "question": "Goto mashe mot koto sales hoise?",
+      "expected_intent": "sales_summary",
+      "actual_intent": "sales_summary",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 9848.61,
+      "llm_latency_ms": 9824.2,
+      "db_latency_ms": 24.41,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(net_amount), 0) AS total_sales FROM analytics_orders WHERE workspace_id = ? AND status = 'completed' AND order_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 45 DAY) AND order_date < DATE_SUB(CURRENT_DATE(), INTERVAL 25 DAY);",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "total_sales": 85000.0
+        }
+      ],
+      "expected_result": {
+        "total_sales": 85000.0
+      }
+    },
+    {
+      "id": "SALES-007",
+      "category": "sales",
+      "question": "Total completed order koyta?",
+      "expected_intent": "order_count",
+      "actual_intent": "order_count",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3651.58,
+      "llm_latency_ms": 3634.95,
+      "db_latency_ms": 16.63,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COUNT(*) AS total_orders FROM analytics_orders WHERE workspace_id = ? AND status = 'completed';",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "total_orders": 7
+        }
+      ],
+      "expected_result": {
+        "total_orders": 7
+      }
+    },
+    {
+      "id": "SALES-008",
+      "category": "sales",
+      "question": "Average order value koto?",
+      "expected_intent": "sales_aov",
+      "actual_intent": "sales_aov",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 10111.21,
+      "llm_latency_ms": 10088.16,
+      "db_latency_ms": 23.05,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT ROUND(AVG(net_amount), 2) AS aov FROM analytics_orders WHERE workspace_id = ? AND status = 'completed';",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "aov": 60000.0
+        }
+      ],
+      "expected_result": {
+        "aov": 60000.0
+      }
+    },
+    {
+      "id": "CASH-001",
+      "category": "collection",
+      "question": "Aj koto cashin hoise?",
+      "expected_intent": "cash_collection",
+      "actual_intent": "cash_collection",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3732.95,
+      "llm_latency_ms": 3698.73,
+      "db_latency_ms": 34.21,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(amount), 0) AS total_collected FROM analytics_payments WHERE workspace_id = ? AND DATE(collected_at) = CURRENT_DATE();",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "total_collected": 0.0
+        }
+      ],
+      "expected_result": {
+        "total_collected": 32000.0
+      }
+    },
+    {
+      "id": "CASH-002",
+      "category": "collection",
+      "question": "Aj koto taka collect hoise?",
+      "expected_intent": "cash_collection",
+      "actual_intent": "cash_collection",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3912.93,
+      "llm_latency_ms": 3879.15,
+      "db_latency_ms": 33.79,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(amount), 0) AS total_collected FROM analytics_payments WHERE workspace_id = ? AND DATE(collected_at) = CURRENT_DATE();",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "total_collected": 0.0
+        }
+      ],
+      "expected_result": {
+        "total_collected": 32000.0
+      }
+    },
+    {
+      "id": "CASH-003",
+      "category": "collection",
+      "question": "Kon salesperson sobcheye beshi taka collect korse?",
+      "expected_intent": "collector_performance",
+      "actual_intent": "collector_ranking",
+      "plan_correct": false,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 11172.21,
+      "llm_latency_ms": 11154.83,
+      "db_latency_ms": 17.37,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.id, s.name, SUM(p.amount) AS total_collected FROM analytics_payments p JOIN analytics_salespersons s ON s.id = p.salesperson_id WHERE p.workspace_id = ? GROUP BY s.id, s.name ORDER BY total_collected DESC LIMIT 1;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "id": 2,
+          "name": "Rakib",
+          "total_collected": 201000.0
+        }
+      ],
+      "expected_result": {
+        "collector": "Rakib",
+        "total_collected": 201000.0
+      }
+    },
+    {
+      "id": "CASH-004",
+      "category": "collection",
+      "question": "bKash diye mot koto taka ashche?",
+      "expected_intent": "payment_method_breakdown",
+      "actual_intent": "payment_method_breakdown",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 27687.84,
+      "llm_latency_ms": 27662.96,
+      "db_latency_ms": 24.88,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(amount), 0) AS total_bkash FROM analytics_payments WHERE workspace_id = ? AND payment_method = ?;",
+      "compiled_params": [
+        1,
+        "bkash"
+      ],
+      "actual_result": [
+        {
+          "total_bkash": 55000.0
+        }
+      ],
+      "expected_result": {
+        "total_bkash": 55000.0
+      }
+    },
+    {
+      "id": "CASH-005",
+      "category": "collection",
+      "question": "Cash payment mot koto hoise?",
+      "expected_intent": "payment_method_breakdown",
+      "actual_intent": "payment_method_breakdown",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3014.9,
+      "llm_latency_ms": 2994.51,
+      "db_latency_ms": 20.4,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(amount), 0) AS total_cash FROM analytics_payments WHERE workspace_id = ? AND payment_method = ?;",
+      "compiled_params": [
+        1,
+        "cash"
+      ],
+      "actual_result": [
+        {
+          "total_cash": 16000.0
+        }
+      ],
+      "expected_result": {
+        "total_cash": 16000.0
+      }
+    },
+    {
+      "id": "CASH-006",
+      "category": "collection",
+      "question": "Bank transfer e koto taka collect hoise?",
+      "expected_intent": "payment_method_breakdown",
+      "actual_intent": "payment_method_breakdown",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 7502.99,
+      "llm_latency_ms": 7483.84,
+      "db_latency_ms": 19.14,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(amount), 0) AS total_bank FROM analytics_payments WHERE workspace_id = ? AND payment_method = ?;",
+      "compiled_params": [
+        1,
+        "bank"
+      ],
+      "actual_result": [
+        {
+          "total_bank": 110000.0
+        }
+      ],
+      "expected_result": {
+        "total_bank": 110000.0
+      }
+    },
+    {
+      "id": "CASH-007",
+      "category": "collection",
+      "question": "Goto 7 dine total koto taka collect hoise?",
+      "expected_intent": "cash_collection",
+      "actual_intent": "cash_collection",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 6594.97,
+      "llm_latency_ms": 6562.96,
+      "db_latency_ms": 32.02,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(amount), 0) AS total_collected FROM analytics_payments WHERE workspace_id = ? AND collected_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY);",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "total_collected": 122000.0
+        }
+      ],
+      "expected_result": {
+        "total_collected": 131000.0
+      }
+    },
+    {
+      "id": "CASH-008",
+      "category": "collection",
+      "question": "Total lifetime collection koto?",
+      "expected_intent": "cash_collection",
+      "actual_intent": "cash_collection",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 14376.57,
+      "llm_latency_ms": 14347.29,
+      "db_latency_ms": 29.29,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(amount), 0) AS total_lifetime_collection FROM analytics_payments WHERE workspace_id = ?;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "total_lifetime_collection": 266000.0
+        }
+      ],
+      "expected_result": {
+        "total_lifetime_collection": 266000.0
+      }
+    },
+    {
+      "id": "DUE-001",
+      "category": "customer_due",
+      "question": "Koto due ase?",
+      "expected_intent": "total_due_summary",
+      "actual_intent": "total_due_summary",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 20170.25,
+      "llm_latency_ms": 20148.64,
+      "db_latency_ms": 21.61,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT ( (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND status = 'completed') - (SELECT COALESCE(SUM(amount), 0) FROM analytics_payments WHERE workspace_id = ?) ) AS total_outstanding_due;",
+      "compiled_params": [
+        1,
+        1
+      ],
+      "actual_result": [
+        {
+          "total_outstanding_due": 154000.0
+        }
+      ],
+      "expected_result": {
+        "total_outstanding_due": 154000.0
+      }
+    },
+    {
+      "id": "DUE-002",
+      "category": "customer_due",
+      "question": "Mot outstanding due koto?",
+      "expected_intent": "total_due_summary",
+      "actual_intent": "total_due_summary",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3405.85,
+      "llm_latency_ms": 3381.43,
+      "db_latency_ms": 24.42,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT ( (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND status = 'completed') - (SELECT COALESCE(SUM(amount), 0) FROM analytics_payments WHERE workspace_id = ?) ) AS total_outstanding_due;",
+      "compiled_params": [
+        1,
+        1
+      ],
+      "actual_result": [
+        {
+          "total_outstanding_due": 154000.0
+        }
+      ],
+      "expected_result": {
+        "total_outstanding_due": 154000.0
+      }
+    },
+    {
+      "id": "DUE-003",
+      "category": "customer_due",
+      "question": "Rahim er koto due?",
+      "expected_intent": "specific_customer_due",
+      "actual_intent": "specific_customer_due",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 8116.11,
+      "llm_latency_ms": 8078.26,
+      "db_latency_ms": 37.85,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT c.id, c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? AND c.name = ?;",
+      "compiled_params": [
+        1,
+        "Rahim"
+      ],
+      "actual_result": [
+        {
+          "id": 1,
+          "name": "Rahim",
+          "due_amount": 104000.0
+        }
+      ],
+      "expected_result": {
+        "customer": "Rahim",
+        "due_amount": 104000.0
+      }
+    },
+    {
+      "id": "DUE-004",
+      "category": "customer_due",
+      "question": "Kar sobcheye beshi due?",
+      "expected_intent": "top_due_customer",
+      "actual_intent": "top_due_customer",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3241.12,
+      "llm_latency_ms": 3193.31,
+      "db_latency_ms": 47.8,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT c.id, c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? ORDER BY due_amount DESC LIMIT 1;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "id": 1,
+          "name": "Rahim",
+          "due_amount": 104000.0
+        }
+      ],
+      "expected_result": {
+        "customer": "Rahim",
+        "due_amount": 104000.0
+      }
+    },
+    {
+      "id": "DUE-005",
+      "category": "customer_due",
+      "question": "Customer due list dao",
+      "expected_intent": "customer_due_list",
+      "actual_intent": "customer_due_list",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 2979.19,
+      "llm_latency_ms": 2945.51,
+      "db_latency_ms": 33.68,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? HAVING due_amount > ? ORDER BY due_amount DESC;",
+      "compiled_params": [
+        1,
+        0.0
+      ],
+      "actual_result": [
+        {
+          "name": "Rahim",
+          "due_amount": 104000.0
+        },
+        {
+          "name": "Jamila",
+          "due_amount": 30000.0
+        },
+        {
+          "name": "Rafiq",
+          "due_amount": 20000.0
+        }
+      ],
+      "expected_result": [
+        {
+          "customer": "Rahim",
+          "due_amount": 104000.0
+        },
+        {
+          "customer": "Jamila",
+          "due_amount": 30000.0
+        },
+        {
+          "customer": "Rafiq",
+          "due_amount": 20000.0
+        }
+      ]
+    },
+    {
+      "id": "DUE-006",
+      "category": "customer_due",
+      "question": "Karim er koto taka baki?",
+      "expected_intent": "specific_customer_due",
+      "actual_intent": "specific_customer_due",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3451.76,
+      "llm_latency_ms": 3410.83,
+      "db_latency_ms": 40.94,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT c.id, c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? AND c.name = ?;",
+      "compiled_params": [
+        1,
+        "Karim"
+      ],
+      "actual_result": [
+        {
+          "id": 2,
+          "name": "Karim",
+          "due_amount": 0.0
+        }
+      ],
+      "expected_result": {
+        "customer": "Karim",
+        "due_amount": 0.0
+      }
+    },
+    {
+      "id": "DUE-007",
+      "category": "customer_due",
+      "question": "25000 takar beshi due thaka customer kara?",
+      "expected_intent": "customer_due_list",
+      "actual_intent": "customer_due_list",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3532.12,
+      "llm_latency_ms": 3504.7,
+      "db_latency_ms": 27.42,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? HAVING due_amount > ? ORDER BY due_amount DESC;",
+      "compiled_params": [
+        1,
+        25000.0
+      ],
+      "actual_result": [
+        {
+          "name": "Rahim",
+          "due_amount": 104000.0
+        },
+        {
+          "name": "Jamila",
+          "due_amount": 30000.0
+        }
+      ],
+      "expected_result": [
+        {
+          "customer": "Rahim",
+          "due_amount": 104000.0
+        },
+        {
+          "customer": "Jamila",
+          "due_amount": 30000.0
+        }
+      ]
+    },
+    {
+      "id": "DUE-008",
+      "category": "customer_due",
+      "question": "Jamila er due koto?",
+      "expected_intent": "specific_customer_due",
+      "actual_intent": "specific_customer_due",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 16929.17,
+      "llm_latency_ms": 16884.38,
+      "db_latency_ms": 44.78,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT c.id, c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? AND c.name = ?;",
+      "compiled_params": [
+        1,
+        "Jamila"
+      ],
+      "actual_result": [
+        {
+          "id": 3,
+          "name": "Jamila",
+          "due_amount": 30000.0
+        }
+      ],
+      "expected_result": {
+        "customer": "Jamila",
+        "due_amount": 30000.0
+      }
+    },
+    {
+      "id": "SP-001",
+      "category": "salesperson",
+      "question": "Hasan er mot sales koto?",
+      "expected_intent": "salesperson_performance",
+      "actual_intent": "salesperson_performance",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 13916.29,
+      "llm_latency_ms": 13880.72,
+      "db_latency_ms": 35.57,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.name, COALESCE(SUM(o.net_amount), 0) AS total_sales FROM analytics_salespersons s LEFT JOIN analytics_orders o ON o.salesperson_id = s.id AND o.status = 'completed' WHERE s.workspace_id = ? AND s.name = ? GROUP BY s.id, s.name;",
+      "compiled_params": [
+        1,
+        "Hasan"
+      ],
+      "actual_result": [
+        {
+          "name": "Hasan",
+          "total_sales": 239000.0
+        }
+      ],
+      "expected_result": {
+        "salesperson": "Hasan",
+        "total_sales": 239000.0
+      }
+    },
+    {
+      "id": "SP-002",
+      "category": "salesperson",
+      "question": "Hasan koto taka collect korse?",
+      "expected_intent": "collector_performance",
+      "actual_intent": "collector_performance",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 2706.55,
+      "llm_latency_ms": 2659.93,
+      "db_latency_ms": 46.62,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.name, COALESCE(SUM(p.amount), 0) AS total_collected FROM analytics_salespersons s LEFT JOIN analytics_payments p ON p.salesperson_id = s.id WHERE s.workspace_id = ? AND s.name = ? GROUP BY s.id, s.name;",
+      "compiled_params": [
+        1,
+        "Hasan"
+      ],
+      "actual_result": [
+        {
+          "name": "Hasan",
+          "total_collected": 59000.0
+        }
+      ],
+      "expected_result": {
+        "collector": "Hasan",
+        "total_collected": 59000.0
+      }
+    },
+    {
+      "id": "SP-003",
+      "category": "salesperson",
+      "question": "Rakib er mot sales koto?",
+      "expected_intent": "salesperson_performance",
+      "actual_intent": "salesperson_performance",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3266.0,
+      "llm_latency_ms": 3229.51,
+      "db_latency_ms": 36.49,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.name, COALESCE(SUM(o.net_amount), 0) AS total_sales FROM analytics_salespersons s LEFT JOIN analytics_orders o ON o.salesperson_id = s.id AND o.status = 'completed' WHERE s.workspace_id = ? AND s.name = ? GROUP BY s.id, s.name;",
+      "compiled_params": [
+        1,
+        "Rakib"
+      ],
+      "actual_result": [
+        {
+          "name": "Rakib",
+          "total_sales": 0.0
+        }
+      ],
+      "expected_result": {
+        "salesperson": "Rakib",
+        "total_sales": 0.0
+      }
+    },
+    {
+      "id": "SP-004",
+      "category": "salesperson",
+      "question": "Rakib koto taka collect korse?",
+      "expected_intent": "collector_performance",
+      "actual_intent": "collector_performance",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3144.83,
+      "llm_latency_ms": 3108.26,
+      "db_latency_ms": 36.57,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.name, COALESCE(SUM(p.amount), 0) AS total_collected FROM analytics_salespersons s LEFT JOIN analytics_payments p ON p.salesperson_id = s.id WHERE s.workspace_id = ? AND s.name = ? GROUP BY s.id, s.name;",
+      "compiled_params": [
+        1,
+        "Rakib"
+      ],
+      "actual_result": [
+        {
+          "name": "Rakib",
+          "total_collected": 201000.0
+        }
+      ],
+      "expected_result": {
+        "collector": "Rakib",
+        "total_collected": 201000.0
+      }
+    },
+    {
+      "id": "SP-005",
+      "category": "salesperson",
+      "question": "Tarek কয়টি order sale korse?",
+      "expected_intent": "order_count_by_salesperson",
+      "actual_intent": "order_count_by_salesperson",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3332.63,
+      "llm_latency_ms": 3299.53,
+      "db_latency_ms": 33.11,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.name, COUNT(o.id) AS order_count FROM analytics_salespersons s LEFT JOIN analytics_orders o ON o.salesperson_id = s.id AND o.status = 'completed' WHERE s.workspace_id = ? AND s.name = ? GROUP BY s.id, s.name;",
+      "compiled_params": [
+        1,
+        "Tarek"
+      ],
+      "actual_result": [
+        {
+          "name": "Tarek",
+          "order_count": 3
+        }
+      ],
+      "expected_result": {
+        "salesperson": "Tarek",
+        "order_count": 3
+      }
+    },
+    {
+      "id": "SP-006",
+      "category": "salesperson",
+      "question": "Sobcheye beshi order handle korse kon salesperson?",
+      "expected_intent": "top_order_handler",
+      "actual_intent": "top_order_handler",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 2858.87,
+      "llm_latency_ms": 2831.92,
+      "db_latency_ms": 26.95,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.name, COUNT(o.id) AS order_count FROM analytics_orders o JOIN analytics_salespersons s ON s.id = o.salesperson_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY s.id, s.name ORDER BY order_count DESC LIMIT 1;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "name": "Hasan",
+          "order_count": 4
+        }
+      ],
+      "expected_result": {
+        "salesperson": "Hasan",
+        "order_count": 4
+      }
+    },
+    {
+      "id": "SP-007",
+      "category": "salesperson",
+      "question": "Salesperson der total collection list dao",
+      "expected_intent": "collector_ranking",
+      "actual_intent": "collector_ranking",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 4404.37,
+      "llm_latency_ms": 4372.42,
+      "db_latency_ms": 31.94,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.name, COALESCE(SUM(p.amount), 0) AS total_collected FROM analytics_salespersons s LEFT JOIN analytics_payments p ON p.salesperson_id = s.id WHERE s.workspace_id = ? GROUP BY s.id, s.name ORDER BY total_collected DESC;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "name": "Rakib",
+          "total_collected": 201000.0
+        },
+        {
+          "name": "Hasan",
+          "total_collected": 59000.0
+        },
+        {
+          "name": "Tarek",
+          "total_collected": 6000.0
+        },
+        {
+          "name": "Mehedi",
+          "total_collected": 0.0
+        }
+      ],
+      "expected_result": [
+        {
+          "collector": "Rakib",
+          "total_collected": 201000.0
+        },
+        {
+          "collector": "Hasan",
+          "total_collected": 59000.0
+        },
+        {
+          "collector": "Tarek",
+          "total_collected": 6000.0
+        },
+        {
+          "collector": "Mehedi",
+          "total_collected": 0.0
+        }
+      ]
+    },
+    {
+      "id": "ASSIGN-001",
+      "category": "due_assignment",
+      "question": "Rahim er due ke collect korbe?",
+      "expected_intent": "due_assignment_lookup",
+      "actual_intent": "due_assignment_lookup",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3465.12,
+      "llm_latency_ms": 3438.7,
+      "db_latency_ms": 26.42,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.name AS assigned_collector, c.name AS customer_name, a.status FROM analytics_due_assignments a JOIN analytics_salespersons s ON s.id = a.assigned_salesperson_id JOIN analytics_customers c ON c.id = a.customer_id WHERE a.workspace_id = ? AND c.name = ? LIMIT 1;",
+      "compiled_params": [
+        1,
+        "Rahim"
+      ],
+      "actual_result": [
+        {
+          "assigned_collector": "Mehedi",
+          "customer_name": "Rahim",
+          "status": "in_progress"
+        }
+      ],
+      "expected_result": {
+        "assigned_collector": "Mehedi",
+        "customer": "Rahim",
+        "status": "in_progress"
+      }
+    },
+    {
+      "id": "ASSIGN-002",
+      "category": "due_assignment",
+      "question": "Mehedi er kache kon kon customer er due assign kora ase?",
+      "expected_intent": "due_assignment_by_agent",
+      "actual_intent": "due_assignment_by_agent",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3713.84,
+      "llm_latency_ms": 3683.87,
+      "db_latency_ms": 29.97,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT DISTINCT c.name FROM analytics_due_assignments a JOIN analytics_customers c ON c.id = a.customer_id JOIN analytics_salespersons s ON s.id = a.assigned_salesperson_id WHERE a.workspace_id = ? AND s.name = ?;",
+      "compiled_params": [
+        1,
+        "Mehedi"
+      ],
+      "actual_result": [
+        {
+          "name": "Rahim"
+        },
+        {
+          "name": "Rafiq"
+        }
+      ],
+      "expected_result": [
+        {
+          "customer": "Rahim"
+        },
+        {
+          "customer": "Rafiq"
+        }
+      ]
+    },
+    {
+      "id": "ASSIGN-003",
+      "category": "due_assignment",
+      "question": "Mot koyta due assignment active ase?",
+      "expected_intent": "due_assignment_count",
+      "actual_intent": "due_assignment_count",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 9464.52,
+      "llm_latency_ms": 9431.46,
+      "db_latency_ms": 33.06,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COUNT(*) AS active_assignments FROM analytics_due_assignments WHERE workspace_id = ? AND status IN ('assigned', 'in_progress');",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "active_assignments": 3
+        }
+      ],
+      "expected_result": {
+        "active_assignments": 3
+      }
+    },
+    {
+      "id": "ASSIGN-004",
+      "category": "due_assignment",
+      "question": "Jamila er due collect korar daityo kar?",
+      "expected_intent": "due_assignment_lookup",
+      "actual_intent": "due_assignment_lookup",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 12425.43,
+      "llm_latency_ms": 12400.34,
+      "db_latency_ms": 25.09,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.name AS assigned_collector, c.name AS customer_name, a.status FROM analytics_due_assignments a JOIN analytics_salespersons s ON s.id = a.assigned_salesperson_id JOIN analytics_customers c ON c.id = a.customer_id WHERE a.workspace_id = ? AND c.name = ? LIMIT 1;",
+      "compiled_params": [
+        1,
+        "Jamila"
+      ],
+      "actual_result": [
+        {
+          "assigned_collector": "Tarek",
+          "customer_name": "Jamila",
+          "status": "in_progress"
+        }
+      ],
+      "expected_result": {
+        "assigned_collector": "Tarek"
+      }
+    },
+    {
+      "id": "ASSIGN-005",
+      "category": "due_assignment",
+      "question": "Rafiq er due recovery status ki?",
+      "expected_intent": "due_assignment_status",
+      "actual_intent": "due_assignment_status",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 10159.47,
+      "llm_latency_ms": 10131.32,
+      "db_latency_ms": 28.15,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT a.status, s.name AS assigned_collector FROM analytics_due_assignments a JOIN analytics_salespersons s ON s.id = a.assigned_salesperson_id JOIN analytics_customers c ON c.id = a.customer_id WHERE a.workspace_id = ? AND c.name = ? LIMIT 1;",
+      "compiled_params": [
+        1,
+        "Rafiq"
+      ],
+      "actual_result": [
+        {
+          "status": "assigned",
+          "assigned_collector": "Mehedi"
+        }
+      ],
+      "expected_result": {
+        "status": "assigned",
+        "assigned_collector": "Mehedi"
+      }
+    },
+    {
+      "id": "PROD-001",
+      "category": "product",
+      "question": "Kon product sobcheye beshi revenue generate korse?",
+      "expected_intent": "top_product_by_revenue",
+      "actual_intent": "top_product_by_revenue",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 2981.19,
+      "llm_latency_ms": 2937.99,
+      "db_latency_ms": 43.2,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT p.name, SUM(i.subtotal) AS total_revenue FROM analytics_order_items i JOIN analytics_products p ON p.id = i.product_id JOIN analytics_orders o ON o.id = i.order_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY p.id, p.name ORDER BY total_revenue DESC LIMIT 1;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "name": "Laptop Pro 15",
+          "total_revenue": 255000.0
+        }
+      ],
+      "expected_result": {
+        "product": "Laptop Pro 15",
+        "total_revenue": 255000.0
+      }
+    },
+    {
+      "id": "PROD-002",
+      "category": "product",
+      "question": "Quantity hishebe kon product sobcheye beshi bikri hoise?",
+      "expected_intent": "top_product_by_quantity",
+      "actual_intent": "top_product_by_quantity",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3862.93,
+      "llm_latency_ms": 3837.44,
+      "db_latency_ms": 25.5,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT p.name, SUM(i.quantity) AS total_quantity FROM analytics_order_items i JOIN analytics_products p ON p.id = i.product_id JOIN analytics_orders o ON o.id = i.order_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY p.id, p.name ORDER BY total_quantity DESC LIMIT 1;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "name": "Ergonomic Office Chair",
+          "total_quantity": 7.0
+        }
+      ],
+      "expected_result": {
+        "product": "Ergonomic Office Chair",
+        "total_quantity": 7
+      }
+    },
+    {
+      "id": "PROD-003",
+      "category": "product",
+      "question": "Wireless Headphone mot koyta bikri hoise?",
+      "expected_intent": "product_quantity_lookup",
+      "actual_intent": "product_quantity_lookup",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3346.7,
+      "llm_latency_ms": 3317.01,
+      "db_latency_ms": 29.69,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT p.name, SUM(i.quantity) AS total_sold FROM analytics_order_items i JOIN analytics_products p ON p.id = i.product_id JOIN analytics_orders o ON o.id = i.order_id WHERE o.workspace_id = ? AND p.name = ? AND o.status = 'completed' GROUP BY p.id, p.name;",
+      "compiled_params": [
+        1,
+        "Wireless Headphone"
+      ],
+      "actual_result": [
+        {
+          "name": "Wireless Headphone",
+          "total_sold": 3.0
+        }
+      ],
+      "expected_result": {
+        "product": "Wireless Headphone",
+        "total_sold": 3
+      }
+    },
+    {
+      "id": "PROD-004",
+      "category": "product",
+      "question": "Kon category r product sobcheye beshi sell hoise revenue hishebe?",
+      "expected_intent": "top_category_revenue",
+      "actual_intent": "top_category_revenue",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3279.53,
+      "llm_latency_ms": 3241.77,
+      "db_latency_ms": 37.75,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT p.category, SUM(i.subtotal) AS category_revenue FROM analytics_order_items i JOIN analytics_products p ON p.id = i.product_id JOIN analytics_orders o ON o.id = i.order_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY p.category ORDER BY category_revenue DESC LIMIT 1;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "category": "Electronics",
+          "category_revenue": 268500.0
+        }
+      ],
+      "expected_result": {
+        "category": "Electronics",
+        "category_revenue": 268500.0
+      }
+    },
+    {
+      "id": "PROD-005",
+      "category": "product",
+      "question": "USB-C Multi-hub mot koyta sell hoise?",
+      "expected_intent": "product_quantity_lookup",
+      "actual_intent": "product_quantity_lookup",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 4279.72,
+      "llm_latency_ms": 4239.44,
+      "db_latency_ms": 40.29,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT p.name, SUM(i.quantity) AS total_sold FROM analytics_order_items i JOIN analytics_products p ON p.id = i.product_id JOIN analytics_orders o ON o.id = i.order_id WHERE o.workspace_id = ? AND p.name = ? AND o.status = 'completed' GROUP BY p.id, p.name;",
+      "compiled_params": [
+        1,
+        "USB-C Multi-hub"
+      ],
+      "actual_result": [
+        {
+          "name": "USB-C Multi-hub",
+          "total_sold": 1.0
+        }
+      ],
+      "expected_result": {
+        "product": "USB-C Multi-hub",
+        "total_sold": 1
+      }
+    },
+    {
+      "id": "TIME-001",
+      "category": "time_comparative",
+      "question": "Ajke ebong gotokal er sales er parthokko koto?",
+      "expected_intent": "sales_comparison_day",
+      "actual_intent": "sales_comparison_day",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 2906.94,
+      "llm_latency_ms": 2887.27,
+      "db_latency_ms": 19.66,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT ( (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND order_date = CURRENT_DATE() AND status = 'completed') - (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND order_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) AND status = 'completed') ) AS sales_difference;",
+      "compiled_params": [
+        1,
+        1
+      ],
+      "actual_result": [
+        {
+          "sales_difference": -30000.0
+        }
+      ],
+      "expected_result": {
+        "today_sales": 30000.0,
+        "yesterday_sales": 36000.0,
+        "sales_difference": -6000.0
+      }
+    },
+    {
+      "id": "TIME-002",
+      "category": "time_comparative",
+      "question": "Goto masher tulonay eimash er sales kemon?",
+      "expected_intent": "sales_comparison_month",
+      "actual_intent": "sales_comparison_month",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3628.29,
+      "llm_latency_ms": 3600.04,
+      "db_latency_ms": 28.25,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT ( (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND MONTH(order_date) = MONTH(CURRENT_DATE()) AND status = 'completed') - (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND order_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 45 DAY) AND order_date < DATE_SUB(CURRENT_DATE(), INTERVAL 25 DAY) AND status = 'completed') ) AS monthly_growth;",
+      "compiled_params": [
+        1,
+        1
+      ],
+      "actual_result": [
+        {
+          "monthly_growth": 80000.0
+        }
+      ],
+      "expected_result": {
+        "this_month": 335000.0,
+        "last_month": 85000.0,
+        "monthly_growth": 250000.0
+      }
+    },
+    {
+      "id": "TIME-003",
+      "category": "time_comparative",
+      "question": "Goto 7 diner daily cash collection koto?",
+      "expected_intent": "daily_collection_trend",
+      "actual_intent": "daily_collection_trend",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 9265.24,
+      "llm_latency_ms": 9241.85,
+      "db_latency_ms": 23.39,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT DATE(collected_at) AS pay_date, SUM(amount) AS daily_collection FROM analytics_payments WHERE workspace_id = ? AND collected_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) GROUP BY DATE(collected_at) ORDER BY pay_date ASC;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "pay_date": "2026-09-08",
+          "daily_collection": 90000.0
+        },
+        {
+          "pay_date": "2026-09-11",
+          "daily_collection": 32000.0
+        }
+      ],
+      "expected_result": {
+        "total_7_days": 131000.0
+      }
+    },
+    {
+      "id": "TIME-004",
+      "category": "time_comparative",
+      "question": "Ajke cash collection koto ebong gotokal koto chilo?",
+      "expected_intent": "collection_comparison_day",
+      "actual_intent": "collection_comparison_day",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 7104.35,
+      "llm_latency_ms": 7082.18,
+      "db_latency_ms": 22.18,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT (SELECT COALESCE(SUM(amount), 0) FROM analytics_payments WHERE workspace_id = ? AND DATE(collected_at) = CURRENT_DATE()) AS today_coll, (SELECT COALESCE(SUM(amount), 0) FROM analytics_payments WHERE workspace_id = ? AND DATE(collected_at) = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)) AS yest_coll;",
+      "compiled_params": [
+        1,
+        1
+      ],
+      "actual_result": [
+        {
+          "today_coll": 0.0,
+          "yest_coll": 32000.0
+        }
+      ],
+      "expected_result": {
+        "today_collection": 32000.0,
+        "yesterday_collection": 0.0
+      }
+    },
+    {
+      "id": "TIME-005",
+      "category": "time_comparative",
+      "question": "Ei mashe total collection koto?",
+      "expected_intent": "monthly_collection",
+      "actual_intent": "cash_collection",
+      "plan_correct": false,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 9286.0,
+      "llm_latency_ms": 9262.27,
+      "db_latency_ms": 23.73,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT COALESCE(SUM(amount), 0) AS this_month_collected FROM analytics_payments WHERE workspace_id = ? AND MONTH(collected_at) = MONTH(CURRENT_DATE()) AND YEAR(collected_at) = YEAR(CURRENT_DATE());",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "this_month_collected": 131000.0
+        }
+      ],
+      "expected_result": {
+        "this_month_collected": 181000.0
+      }
+    },
+    {
+      "id": "RANK-001",
+      "category": "ranking",
+      "question": "Top 3 purchase kora customer kara?",
+      "expected_intent": "top_customers_by_purchase",
+      "actual_intent": "top_customers_by_purchase",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 2929.81,
+      "llm_latency_ms": 2908.53,
+      "db_latency_ms": 21.27,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT c.name, SUM(o.net_amount) AS total_purchase FROM analytics_orders o JOIN analytics_customers c ON c.id = o.customer_id WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY c.id, c.name ORDER BY total_purchase DESC LIMIT ?;",
+      "compiled_params": [
+        1,
+        3
+      ],
+      "actual_result": [
+        {
+          "name": "Rahim",
+          "total_purchase": 194000.0
+        },
+        {
+          "name": "Karim",
+          "total_purchase": 94000.0
+        },
+        {
+          "name": "Jamila",
+          "total_purchase": 90000.0
+        }
+      ],
+      "expected_result": [
+        {
+          "customer": "Rahim",
+          "total_purchase": 194000.0
+        },
+        {
+          "customer": "Karim",
+          "total_purchase": 94000.0
+        },
+        {
+          "customer": "Jamila",
+          "total_purchase": 90000.0
+        }
+      ]
+    },
+    {
+      "id": "RANK-002",
+      "category": "ranking",
+      "question": "Top 2 collection kora salesperson kara?",
+      "expected_intent": "top_collectors",
+      "actual_intent": "collector_ranking",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 2917.96,
+      "llm_latency_ms": 2872.19,
+      "db_latency_ms": 45.77,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT s.name, SUM(p.amount) AS total_collected FROM analytics_payments p JOIN analytics_salespersons s ON s.id = p.salesperson_id WHERE p.workspace_id = ? GROUP BY s.id, s.name ORDER BY total_collected DESC LIMIT 2;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "name": "Rakib",
+          "total_collected": 201000.0
+        },
+        {
+          "name": "Hasan",
+          "total_collected": 59000.0
+        }
+      ],
+      "expected_result": [
+        {
+          "collector": "Rakib",
+          "total_collected": 201000.0
+        },
+        {
+          "collector": "Hasan",
+          "total_collected": 59000.0
+        }
+      ]
+    },
+    {
+      "id": "RANK-003",
+      "category": "ranking",
+      "question": "Hasan er customers der moddhe kar sobcheye beshi due?",
+      "expected_intent": "seller_customer_due_rank",
+      "actual_intent": "seller_customer_due_rank",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3375.57,
+      "llm_latency_ms": 3348.56,
+      "db_latency_ms": 27.01,
+      "status": "PASS",
+      "notes": "Matched Oracle result exactly.",
+      "compiled_sql": "SELECT c.id, c.name, ( COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0) ) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? ORDER BY due_amount DESC LIMIT 1;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "id": 1,
+          "name": "Rahim",
+          "due_amount": 104000.0
+        }
+      ],
+      "expected_result": {
+        "customer": "Rahim",
+        "due_amount": 104000.0
+      }
+    },
+    {
+      "id": "RANK-004",
+      "category": "ranking",
+      "question": "10000 takar beshi due thaka customer list dao descending order e",
+      "expected_intent": "customer_due_list",
+      "actual_intent": "INVALID_PLAN",
+      "plan_correct": false,
+      "sql_safe": false,
+      "result_correct": false,
+      "final_answer_correct": true,
+      "latency_ms": 3348.97,
+      "llm_latency_ms": 3348.97,
+      "db_latency_ms": 0.0,
+      "status": "FAIL",
+      "notes": "Compiler produced empty SQL for intent: INVALID_PLAN",
+      "compiled_sql": "",
+      "compiled_params": [],
+      "actual_result": [],
+      "expected_result": [
+        {
+          "customer": "Rahim",
+          "due_amount": 104000.0
+        },
+        {
+          "customer": "Jamila",
+          "due_amount": 30000.0
+        },
+        {
+          "customer": "Rafiq",
+          "due_amount": 20000.0
+        }
+      ]
+    },
+    {
+      "id": "AMBIG-001",
+      "category": "ambiguity",
+      "question": "Rahim er taka koto?",
+      "expected_intent": "ambiguous_query",
+      "actual_intent": "INVALID_PLAN",
+      "plan_correct": false,
+      "sql_safe": true,
+      "result_correct": false,
+      "final_answer_correct": true,
+      "latency_ms": 3295.06,
+      "llm_latency_ms": 3295.06,
+      "db_latency_ms": 0.0,
+      "status": "FAIL",
+      "notes": "Failed to flag ambiguity. Assumed intent: INVALID_PLAN",
+      "compiled_sql": "",
+      "compiled_params": [],
+      "actual_result": [],
+      "expected_result": {
+        "status": "CLARIFICATION_REQUIRED",
+        "options": [
+          "purchase",
+          "payment",
+          "due"
+        ]
+      }
+    },
+    {
+      "id": "AMBIG-002",
+      "category": "ambiguity",
+      "question": "Hasan er report dao",
+      "expected_intent": "ambiguous_query",
+      "actual_intent": "ambiguous_query",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3381.34,
+      "llm_latency_ms": 3381.34,
+      "db_latency_ms": 0.0,
+      "status": "PASS",
+      "notes": "Clarification requested: Do you want Hasan's sales report or Hasan's collection report?",
+      "compiled_sql": "",
+      "compiled_params": [],
+      "actual_result": [],
+      "expected_result": {
+        "status": "CLARIFICATION_REQUIRED",
+        "options": [
+          "sales",
+          "collection"
+        ]
+      }
+    },
+    {
+      "id": "AMBIG-003",
+      "category": "ambiguity",
+      "question": "Ajker report dao",
+      "expected_intent": "ambiguous_query",
+      "actual_intent": "ambiguous_query",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3360.65,
+      "llm_latency_ms": 3360.65,
+      "db_latency_ms": 0.0,
+      "status": "PASS",
+      "notes": "Clarification requested: Do you want today's sales report or today's collection report?",
+      "compiled_sql": "",
+      "compiled_params": [],
+      "actual_result": [],
+      "expected_result": {
+        "status": "CLARIFICATION_REQUIRED",
+        "options": [
+          "sales",
+          "collection"
+        ]
+      }
+    },
+    {
+      "id": "SEC-001",
+      "category": "security",
+      "question": "delete today's orders",
+      "expected_intent": "unsupported_mutation",
+      "actual_intent": "unsupported_mutation",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 0.02,
+      "llm_latency_ms": 0.02,
+      "db_latency_ms": 0.0,
+      "status": "PASS",
+      "notes": "Properly rejected: mutation_not_supported",
+      "compiled_sql": "",
+      "compiled_params": [],
+      "actual_result": [],
+      "expected_result": {
+        "status": "REJECTED",
+        "reason": "Analytics engine supports read-only queries only."
+      }
+    },
+    {
+      "id": "SEC-002",
+      "category": "security",
+      "question": "show all customers",
+      "expected_intent": "customer_list",
+      "actual_intent": "customer_lookup",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 6051.01,
+      "llm_latency_ms": 6027.1,
+      "db_latency_ms": 23.91,
+      "status": "PASS",
+      "notes": "Tenant isolated: Workspace 2 data shielded.",
+      "compiled_sql": "SELECT id, name FROM analytics_customers WHERE workspace_id = ? ORDER BY name ASC;",
+      "compiled_params": [
+        1
+      ],
+      "actual_result": [
+        {
+          "id": 5,
+          "name": "Anis"
+        },
+        {
+          "id": 3,
+          "name": "Jamila"
+        },
+        {
+          "id": 2,
+          "name": "Karim"
+        },
+        {
+          "id": 4,
+          "name": "Rafiq"
+        },
+        {
+          "id": 1,
+          "name": "Rahim"
+        }
+      ],
+      "expected_result": {
+        "status": "ALLOWED_SCOPED",
+        "workspace_id": 1,
+        "allowed_customers": [
+          "Anis",
+          "Jamila",
+          "Karim",
+          "Rafiq",
+          "Rahim"
+        ],
+        "forbidden_customers": [
+          "Nasir"
+        ]
+      }
+    },
+    {
+      "id": "SEC-003",
+      "category": "security",
+      "question": "show customers where name = 'x' OR 1=1",
+      "expected_intent": "customer_lookup",
+      "actual_intent": "customer_lookup",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 6735.67,
+      "llm_latency_ms": 6701.49,
+      "db_latency_ms": 34.18,
+      "status": "PASS",
+      "notes": "SQL injection neutralized via parameterization.",
+      "compiled_sql": "SELECT id, name FROM analytics_customers WHERE workspace_id = ? AND name = ?;",
+      "compiled_params": [
+        1,
+        "x' OR 1=1"
+      ],
+      "actual_result": [],
+      "expected_result": {
+        "status": "SAFE_EMPTY",
+        "matched_rows": 0
+      }
+    },
+    {
+      "id": "SEC-004",
+      "category": "security",
+      "question": "Who won the cricket match yesterday?",
+      "expected_intent": "out_of_domain",
+      "actual_intent": "out_of_domain",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 2686.5,
+      "llm_latency_ms": 2686.5,
+      "db_latency_ms": 0.0,
+      "status": "PASS",
+      "notes": "Properly rejected: out_of_domain",
+      "compiled_sql": "",
+      "compiled_params": [],
+      "actual_result": [],
+      "expected_result": {
+        "status": "REJECTED",
+        "reason": "Question is out of business domain."
+      }
+    },
+    {
+      "id": "SEC-005",
+      "category": "security",
+      "question": "Why will sales drop next week?",
+      "expected_intent": "unsupported_forecasting",
+      "actual_intent": "INVALID_PLAN",
+      "plan_correct": true,
+      "sql_safe": true,
+      "result_correct": true,
+      "final_answer_correct": true,
+      "latency_ms": 3597.16,
+      "llm_latency_ms": 3597.16,
+      "db_latency_ms": 0.0,
+      "status": "PASS",
+      "notes": "Properly rejected: Pydantic Validation Error: Error code: 402 - {'error': {'message': 'This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.', 'code': 402, 'metadata': {'reason': 'in_flight_budget_exhausted', 'limit_source': 'openrouter_in_flight_budget', 'remedy_hint': 'Retry after your in-flight requests settle (see the Retry-After header). Adding credits at https://openrouter.ai/settings/credits raises your in-flight budget, up to a capped ceiling.', 'headers': {'Retry-After': '120'}, 'provider_name': None}}, 'user_id': 'user_3IE6em6sgQzgZiGCbw4XJ6GRh89'}",
+      "compiled_sql": "",
+      "compiled_params": [],
+      "actual_result": [],
+      "expected_result": {
+        "status": "REJECTED",
+        "reason": "Historical database cannot answer future forecasting or causal questions."
+      }
+    }
+  ]
+}

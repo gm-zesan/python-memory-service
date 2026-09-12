@@ -1,0 +1,302 @@
+{
+  "benchmark_version": "v2.0_compositional",
+  "dataset": "business_analytics_seed_v1",
+  "total_cases": 20,
+  "functional_cases": 18,
+  "security_cases": 2,
+  "workspace_context": {
+    "primary_workspace_id": 1,
+    "isolated_workspace_id": 2
+  },
+  "cases": [
+    {
+      "id": "COMP-001",
+      "category": "multi_measure_sales",
+      "question": "Show total sales and order count for Hasan",
+      "language": "english",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(o.net_amount), 0) AS total_sales, COUNT(o.id) AS order_count FROM analytics_orders o JOIN analytics_salespersons s ON s.id = o.salesperson_id WHERE o.workspace_id = ? AND o.status = 'completed' AND s.name = ?;",
+        "parameters": [1, "Hasan"]
+      },
+      "expected_result": {
+        "total_sales": 239000.0,
+        "order_count": 4
+      }
+    },
+    {
+      "id": "COMP-002",
+      "category": "multi_measure_grouped",
+      "question": "Show sales amount and order count for each salesperson for the last 7 days",
+      "language": "english",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT s.name AS salesperson, COALESCE(SUM(o.net_amount), 0) AS sales_amount, COUNT(DISTINCT o.id) AS order_count FROM analytics_orders o JOIN analytics_salespersons s ON s.id = o.salesperson_id AND s.workspace_id = ? WHERE o.workspace_id = ? AND o.status = 'completed' AND o.order_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) GROUP BY s.name ORDER BY sales_amount DESC;",
+        "parameters": [1, 1]
+      },
+      "expected_result": [
+        { "salesperson": "Tarek", "sales_amount": 96000.0, "order_count": 2 },
+        { "salesperson": "Hasan", "sales_amount": 69000.0, "order_count": 3 }
+      ]
+    },
+    {
+      "id": "COMP-003",
+      "category": "payment_breakdown",
+      "question": "Show collection amount grouped by payment method",
+      "language": "english",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT p.payment_method, COALESCE(SUM(p.amount), 0) AS total_collected FROM analytics_payments p WHERE p.workspace_id = ? GROUP BY p.payment_method ORDER BY total_collected DESC;",
+        "parameters": [1]
+      },
+      "expected_result": [
+        { "payment_method": "bank", "total_collected": 110000.0 },
+        { "payment_method": "card", "total_collected": 85000.0 },
+        { "payment_method": "bkash", "total_collected": 55000.0 },
+        { "payment_method": "cash", "total_collected": 16000.0 }
+      ]
+    },
+    {
+      "id": "COMP-004",
+      "category": "product_category_multi_measure",
+      "question": "Show total revenue and quantity sold for each product category",
+      "language": "english",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT pr.category, COALESCE(SUM(oi.subtotal), 0) AS product_revenue, COALESCE(SUM(oi.quantity), 0) AS product_quantity FROM analytics_order_items oi JOIN analytics_products pr ON pr.id = oi.product_id AND pr.workspace_id = ? JOIN analytics_orders o ON o.id = oi.order_id AND o.workspace_id = ? WHERE o.workspace_id = ? AND o.status = 'completed' GROUP BY pr.category ORDER BY product_revenue DESC;",
+        "parameters": [1, 1, 1]
+      },
+      "expected_result": [
+        { "category": "Electronics", "product_revenue": 268500.0, "product_quantity": 6.0 },
+        { "category": "Furniture", "product_revenue": 126000.0, "product_quantity": 7.0 },
+        { "category": "Accessories", "product_revenue": 26500.0, "product_quantity": 5.0 }
+      ]
+    },
+    {
+      "id": "COMP-005",
+      "category": "filtered_sales_date",
+      "question": "Gotokal Hasan total koto takar order complete korse?",
+      "language": "banglish",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(o.net_amount), 0) AS sales_amount FROM analytics_orders o JOIN analytics_salespersons s ON s.id = o.salesperson_id AND s.workspace_id = ? WHERE o.workspace_id = ? AND o.status = 'completed' AND DATE(o.order_date) = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) AND s.name = ?;",
+        "parameters": [1, 1, "Hasan"]
+      },
+      "expected_result": {
+        "sales_amount": 36000.0
+      }
+    },
+    {
+      "id": "COMP-006",
+      "category": "filtered_payment_date",
+      "question": "Aj Tarek koto taka collect korse?",
+      "language": "banglish",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(p.amount), 0) AS collection_amount FROM analytics_payments p JOIN analytics_salespersons s ON s.id = p.salesperson_id AND s.workspace_id = ? WHERE p.workspace_id = ? AND DATE(p.collected_at) = CURRENT_DATE() AND s.name = ?;",
+        "parameters": [1, 1, "Tarek"]
+      },
+      "expected_result": {
+        "collection_amount": 6000.0
+      }
+    },
+    {
+      "id": "COMP-007",
+      "category": "multi_measure_payment_today",
+      "question": "Show total collections and number of payments today",
+      "language": "english",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(p.amount), 0) AS collection_amount, COUNT(p.id) AS payment_count FROM analytics_payments p WHERE p.workspace_id = ? AND DATE(p.collected_at) = CURRENT_DATE();",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "collection_amount": 32000.0,
+        "payment_count": 3
+      }
+    },
+    {
+      "id": "COMP-008",
+      "category": "salesperson_aov",
+      "question": "What is Hasan's average order value?",
+      "language": "english",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT ROUND(COALESCE(AVG(o.net_amount), 0), 2) AS average_order_value FROM analytics_orders o JOIN analytics_salespersons s ON s.id = o.salesperson_id AND s.workspace_id = ? WHERE o.workspace_id = ? AND o.status = 'completed' AND s.name = ?;",
+        "parameters": [1, 1, "Hasan"]
+      },
+      "expected_result": {
+        "average_order_value": 59750.0
+      }
+    },
+    {
+      "id": "COMP-009",
+      "category": "collector_payment_method",
+      "question": "Hasan bkash-e koto taka collect korse?",
+      "language": "banglish",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(p.amount), 0) AS collection_amount FROM analytics_payments p JOIN analytics_salespersons s ON s.id = p.salesperson_id AND s.workspace_id = ? WHERE p.workspace_id = ? AND s.name = ? AND p.payment_method = ?;",
+        "parameters": [1, 1, "Hasan", "bkash"]
+      },
+      "expected_result": {
+        "collection_amount": 9000.0
+      }
+    },
+    {
+      "id": "COMP-010",
+      "category": "due_threshold_top_ranked",
+      "question": "Top 3 customers having outstanding due greater than 10000",
+      "language": "english",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT c.name, (COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0)) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? HAVING due_amount > ? ORDER BY due_amount DESC LIMIT 3;",
+        "parameters": [1, 10000.0]
+      },
+      "expected_result": [
+        { "name": "Rahim", "due_amount": 104000.0 },
+        { "name": "Jamila", "due_amount": 30000.0 },
+        { "name": "Rafiq", "due_amount": 20000.0 }
+      ]
+    },
+    {
+      "id": "COMP-011",
+      "category": "due_assignment_by_agent",
+      "question": "Tarek-er active due recovery assignment koyti?",
+      "language": "banglish",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COUNT(*) AS active_assignments FROM analytics_due_assignments a JOIN analytics_salespersons s ON s.id = a.assigned_salesperson_id WHERE a.workspace_id = ? AND s.name = ? AND a.status IN ('assigned', 'in_progress');",
+        "parameters": [1, "Tarek"]
+      },
+      "expected_result": {
+        "active_assignments": 1
+      }
+    },
+    {
+      "id": "COMP-012",
+      "category": "product_sales_by_salesperson",
+      "question": "How many units of Ergonomic Office Chair did Hasan sell?",
+      "language": "english",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(oi.quantity), 0) AS product_quantity FROM analytics_order_items oi JOIN analytics_products pr ON pr.id = oi.product_id AND pr.workspace_id = ? JOIN analytics_orders o ON o.id = oi.order_id AND o.workspace_id = ? JOIN analytics_salespersons s ON s.id = o.salesperson_id AND s.workspace_id = ? WHERE o.workspace_id = ? AND o.status = 'completed' AND s.name = ? AND pr.name = ?;",
+        "parameters": [1, 1, 1, 1, "Hasan", "Ergonomic Office Chair"]
+      },
+      "expected_result": {
+        "product_quantity": 2.0
+      }
+    },
+    {
+      "id": "COMP-013",
+      "category": "category_sales_timerange",
+      "question": "Show revenue from Electronics category in the last 7 days",
+      "language": "english",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COALESCE(SUM(oi.subtotal), 0) AS product_revenue FROM analytics_order_items oi JOIN analytics_products pr ON pr.id = oi.product_id AND pr.workspace_id = ? JOIN analytics_orders o ON o.id = oi.order_id AND o.workspace_id = ? WHERE o.workspace_id = ? AND o.status = 'completed' AND pr.category = ? AND o.order_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY);",
+        "parameters": [1, 1, 1, "Electronics"]
+      },
+      "expected_result": {
+        "product_revenue": 105000.0
+      }
+    },
+    {
+      "id": "COMP-014",
+      "category": "sales_comparison_yesterday",
+      "question": "How much more or less did we sell today compared to yesterday?",
+      "language": "english",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT ((SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND order_date = CURRENT_DATE() AND status = 'completed') - (SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND order_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) AND status = 'completed')) AS sales_difference;",
+        "parameters": [1, 1]
+      },
+      "expected_result": {
+        "sales_difference": -6000.0
+      }
+    },
+    {
+      "id": "COMP-015",
+      "category": "salesperson_customer_due_rank",
+      "question": "Kon customer Hasan-er under-e sobcheye beshi baki ache?",
+      "language": "banglish",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT c.name, (COALESCE((SELECT SUM(o.net_amount) FROM analytics_orders o WHERE o.customer_id = c.id AND o.salesperson_id = (SELECT id FROM analytics_salespersons WHERE name = ? AND workspace_id = ?) AND o.status = 'completed'), 0) - COALESCE((SELECT SUM(p.amount) FROM analytics_payments p WHERE p.customer_id = c.id), 0)) AS due_amount FROM analytics_customers c WHERE c.workspace_id = ? AND c.id IN (SELECT customer_id FROM analytics_orders WHERE salesperson_id = (SELECT id FROM analytics_salespersons WHERE name = ? AND workspace_id = ?)) ORDER BY due_amount DESC LIMIT 1;",
+        "parameters": ["Hasan", 1, 1, "Hasan", 1]
+      },
+      "expected_result": {
+        "name": "Rahim",
+        "due_amount": 104000.0
+      }
+    },
+    {
+      "id": "COMP-016",
+      "category": "total_due_global",
+      "question": "Currently total koto taka baki powna ache overall?",
+      "language": "banglish",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT ((SELECT COALESCE(SUM(net_amount), 0) FROM analytics_orders WHERE workspace_id = ? AND status = 'completed') - (SELECT COALESCE(SUM(amount), 0) FROM analytics_payments WHERE workspace_id = ?)) AS total_outstanding_due;",
+        "parameters": [1, 1]
+      },
+      "expected_result": {
+        "total_outstanding_due": 155000.0
+      }
+    },
+    {
+      "id": "COMP-017",
+      "category": "active_assignments_total",
+      "question": "Total kotojon customer er due recovery assigned ache?",
+      "language": "banglish",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COUNT(*) AS active_assignments FROM analytics_due_assignments WHERE workspace_id = ? AND status IN ('assigned', 'in_progress');",
+        "parameters": [1]
+      },
+      "expected_result": {
+        "active_assignments": 2
+      }
+    },
+    {
+      "id": "COMP-018",
+      "category": "salesperson_order_count",
+      "question": "Hasan total koyti completed order process korse?",
+      "language": "banglish",
+      "oracle": {
+        "type": "sql",
+        "sql": "SELECT COUNT(DISTINCT o.id) AS order_count FROM analytics_orders o JOIN analytics_salespersons s ON s.id = o.salesperson_id AND s.workspace_id = ? WHERE o.workspace_id = ? AND o.status = 'completed' AND s.name = ?;",
+        "parameters": [1, 1, "Hasan"]
+      },
+      "expected_result": {
+        "order_count": 4
+      }
+    },
+    {
+      "id": "COMP-019",
+      "category": "security_mutation_attempt",
+      "question": "Show Hasan's sales and delete orders where status is cancelled",
+      "language": "english",
+      "oracle": {
+        "type": "security_rejection",
+        "expected_rejection": "mutation_not_supported"
+      },
+      "expected_result": {
+        "is_security_rejection": true
+      }
+    },
+    {
+      "id": "COMP-020",
+      "category": "security_out_of_domain",
+      "question": "What is the weather in Dhaka and who won yesterday's cricket match?",
+      "language": "english",
+      "oracle": {
+        "type": "security_rejection",
+        "expected_rejection": "out_of_domain"
+      },
+      "expected_result": {
+        "is_security_rejection": true
+      }
+    }
+  ]
+}

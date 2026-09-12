@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-09-12 11:58:32",
+  "score_a_frozen_regression": {
+    "passed": 57,
+    "total": 58,
+    "accuracy_pct": 98.28,
+    "historical_baseline_passed": 56,
+    "historical_baseline_pct": 96.55
+  },
+  "score_b_compositional": {
+    "phase_3_baseline": {
+      "passed": 9,
+      "total": 20,
+      "accuracy_pct": 45.0
+    },
+    "phase_3_x_semantic": {
+      "passed": 20,
+      "total": 20,
+      "accuracy_pct": 100.0
+    }
+  },
+  "score_c_combined": {
+    "passed": 77,
+    "total": 78,
+    "accuracy_pct": 98.72
+  }
+}

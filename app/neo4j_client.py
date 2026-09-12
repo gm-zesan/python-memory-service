@@ -1,7 +1,12 @@
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
-from neo4j import GraphDatabase, Driver
+try:
+    # pyrefly: ignore [missing-import]
+    from neo4j import GraphDatabase, Driver 
+except ImportError:
+    GraphDatabase = None
+    Driver = None  # type: ignore
 from .config import config
 
 logger = logging.getLogger(__name__)
