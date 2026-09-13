@@ -162,20 +162,20 @@ class SemanticPlannerV2:
     """
 
     def __init__(self):
-        # Tier 1: OpenRouter
-        self.openrouter_key = os.getenv("OPENROUTER_API_KEY")
-        self.openrouter_url = os.getenv("OPENROUTER_URL") or "https://openrouter.ai/api/v1"
-        self.openrouter_model = os.getenv("OPENROUTER_MODEL") or "deepseek/deepseek-chat"
-        self.openrouter_client = OpenAI(api_key=self.openrouter_key, base_url=self.openrouter_url)
+        # Primary LLM Provider Config
+        self.primary_key = os.getenv("ANALYTICS_LLM_API_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("DEEPSEEK_API_KEY") or "dummy-key-for-init"
+        self.primary_url = os.getenv("ANALYTICS_LLM_BASE_URL") or os.getenv("OPENROUTER_URL") or "https://api.deepseek.com"
+        self.primary_model = os.getenv("ANALYTICS_LLM_MODEL") or os.getenv("OPENROUTER_MODEL") or "deepseek-chat"
+        self.primary_client = OpenAI(api_key=self.primary_key, base_url=self.primary_url)
 
-        # Tier 2: Direct DeepSeek API
-        self.deepseek_key = os.getenv("DEEPSEEK_API_KEY")
-        self.deepseek_url = os.getenv("DEEPSEEK_URL") or "https://api.deepseek.com"
-        self.deepseek_model = os.getenv("DEEPSEEK_MODEL") or "deepseek-chat"
-        self.deepseek_client = OpenAI(api_key=self.deepseek_key, base_url=self.deepseek_url)
+        # Fallback LLM Provider Config
+        self.fallback_key = os.getenv("ANALYTICS_FALLBACK_LLM_API_KEY") or os.getenv("DEEPSEEK_API_KEY") or self.primary_key
+        self.fallback_url = os.getenv("ANALYTICS_FALLBACK_LLM_BASE_URL") or os.getenv("DEEPSEEK_URL") or "https://api.deepseek.com"
+        self.fallback_model = os.getenv("ANALYTICS_FALLBACK_LLM_MODEL") or os.getenv("DEEPSEEK_MODEL") or "deepseek-chat"
+        self.fallback_client = OpenAI(api_key=self.fallback_key, base_url=self.fallback_url)
 
-        # Circuit breaker for exhausted OpenRouter credits
-        self._openrouter_exhausted = False
+        # Circuit breaker for primary provider
+        self._primary_exhausted = False
 
     def _call_llm(self, client: OpenAI, model: str, question: str) -> SemanticQueryPlan:
         response = client.chat.completions.create(
@@ -197,8 +197,8 @@ class SemanticPlannerV2:
     def plan(self, question: str) -> Tuple[SemanticQueryPlan, Dict[str, Any]]:
         start_time = time.perf_counter()
         meta: Dict[str, Any] = {
-            "provider_used": "openrouter",
-            "model": self.openrouter_model,
+            "provider_used": "primary_llm",
+            "model": self.primary_model,
             "fallback_triggered": False,
             "latency_ms": 0.0,
         }
@@ -214,31 +214,31 @@ class SemanticPlannerV2:
             )
             return plan, meta
 
-        # Tier 1: Try OpenRouter (unless circuit breaker tripped)
-        if not self._openrouter_exhausted:
+        # Tier 1: Try Primary Provider (unless circuit breaker tripped)
+        if not self._primary_exhausted:
             try:
-                plan = self._call_llm(self.openrouter_client, self.openrouter_model, question)
+                plan = self._call_llm(self.primary_client, self.primary_model, question)
                 meta["latency_ms"] = (time.perf_counter() - start_time) * 1000.0
                 return plan, meta
             except Exception as err_tier1:
                 err_str = str(err_tier1)
                 if "402" in err_str or "credits" in err_str.lower() or "quota" in err_str.lower():
-                    self._openrouter_exhausted = True
+                    self._primary_exhausted = True
                 print(
-                    f"[SemanticPlannerV2] OpenRouter failed ({err_tier1}). Failing over to Direct DeepSeek...",
+                    f"[SemanticPlannerV2] Primary LLM provider failed ({err_tier1}). Failing over to Fallback LLM provider...",
                     flush=True,
                 )
                 meta["fallback_triggered"] = True
-                meta["provider_used"] = "deepseek_direct"
-                meta["model"] = self.deepseek_model
+                meta["provider_used"] = "fallback_llm"
+                meta["model"] = self.fallback_model
         else:
             meta["fallback_triggered"] = True
-            meta["provider_used"] = "deepseek_direct"
-            meta["model"] = self.deepseek_model
+            meta["provider_used"] = "fallback_llm"
+            meta["model"] = self.fallback_model
 
-        # Tier 2: Fallback to Direct DeepSeek
+        # Tier 2: Fallback LLM Provider
         try:
-            plan = self._call_llm(self.deepseek_client, self.deepseek_model, question)
+            plan = self._call_llm(self.fallback_client, self.fallback_model, question)
             meta["latency_ms"] = (time.perf_counter() - start_time) * 1000.0
             return plan, meta
         except Exception as err_tier2:
@@ -249,3 +249,4 @@ class SemanticPlannerV2:
                 rejection_reason=f"LLM Provider Failure: {err_tier2}",
             )
             return rejection_plan, meta
+

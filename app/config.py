@@ -21,10 +21,10 @@ class MemoryConfig:
     NEO4J_MAX_CONNECTION_POOL_SIZE: int = int(os.getenv("NEO4J_MAX_CONNECTION_POOL_SIZE", "50"))
 
     # LLM Settings for Graphiti / Extraction (Provider Agnostic)
-    LLM_PROVIDER: str = os.getenv("MEMORY_LLM_PROVIDER", "openrouter")
-    LLM_API_KEY: str = os.getenv("OPENROUTER_API_KEY", os.getenv("DEEPSEEK_API_KEY", ""))
-    LLM_BASE_URL: str = os.getenv("OPENROUTER_URL", "https://openrouter.ai/api/v1")
-    LLM_MODEL: str = os.getenv("MEMORY_LLM_MODEL", "openrouter/free")
+    LLM_PROVIDER: str = os.getenv("MEMORY_LLM_PROVIDER", "generic")
+    LLM_API_KEY: str = os.getenv("MEMORY_LLM_API_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("DEEPSEEK_API_KEY") or ""
+    LLM_BASE_URL: str = os.getenv("MEMORY_LLM_BASE_URL") or os.getenv("OPENROUTER_URL") or "https://api.deepseek.com"
+    LLM_MODEL: str = os.getenv("MEMORY_LLM_MODEL") or os.getenv("OPENROUTER_MODEL") or "deepseek-chat"
 
     # Guardrails
     MAX_SUBGRAPH_EDGES: int = int(os.getenv("MAX_SUBGRAPH_EDGES", "5"))
@@ -32,34 +32,12 @@ class MemoryConfig:
 
     @classmethod
     def get_llm_settings(cls) -> Dict[str, Any]:
-        provider = cls.LLM_PROVIDER.lower()
-        if provider == "deepseek":
-            return {
-                "provider": "deepseek",
-                "base_url": os.getenv("DEEPSEEK_URL", "https://api.deepseek.com"),
-                "api_key": os.getenv("DEEPSEEK_API_KEY", ""),
-                "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
-            }
-        elif provider == "openai":
-            return {
-                "provider": "openai",
-                "base_url": os.getenv("OPENAI_URL", "https://api.openai.com/v1"),
-                "api_key": os.getenv("OPENAI_API_KEY", ""),
-                "model": os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-            }
-        elif provider in ("ollama", "local", "vllm"):
-            return {
-                "provider": provider,
-                "base_url": os.getenv("LOCAL_LLM_URL", "http://localhost:11434/v1"),
-                "api_key": os.getenv("LOCAL_LLM_KEY", "ollama"),
-                "model": os.getenv("LOCAL_LLM_MODEL", "llama3.2"),
-            }
-        else: # default openrouter
-            return {
-                "provider": "openrouter",
-                "base_url": os.getenv("OPENROUTER_URL", "https://openrouter.ai/api/v1"),
-                "api_key": os.getenv("OPENROUTER_API_KEY", cls.LLM_API_KEY),
-                "model": os.getenv("OPENROUTER_MODEL", cls.LLM_MODEL),
-            }
+        return {
+            "provider": cls.LLM_PROVIDER,
+            "base_url": cls.LLM_BASE_URL,
+            "api_key": cls.LLM_API_KEY,
+            "model": cls.LLM_MODEL,
+        }
+
 
 config = MemoryConfig()

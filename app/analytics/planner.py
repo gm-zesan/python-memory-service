@@ -150,17 +150,17 @@ Return ONLY raw valid JSON. No explanations, no markdown code blocks.
 
 class AnalyticsPlanner:
     def __init__(self):
-        # Tier 1: OpenRouter
-        self.openrouter_key = os.getenv("OPENROUTER_API_KEY")
-        self.openrouter_url = os.getenv("OPENROUTER_URL") or "https://openrouter.ai/api/v1"
-        self.openrouter_model = os.getenv("OPENROUTER_MODEL") or "deepseek/deepseek-chat"
-        self.openrouter_client = OpenAI(api_key=self.openrouter_key, base_url=self.openrouter_url)
+        # Primary LLM Provider Config
+        self.primary_key = os.getenv("ANALYTICS_LLM_API_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("DEEPSEEK_API_KEY") or "dummy-key-for-init"
+        self.primary_url = os.getenv("ANALYTICS_LLM_BASE_URL") or os.getenv("OPENROUTER_URL") or "https://api.deepseek.com"
+        self.primary_model = os.getenv("ANALYTICS_LLM_MODEL") or os.getenv("OPENROUTER_MODEL") or "deepseek-chat"
+        self.primary_client = OpenAI(api_key=self.primary_key, base_url=self.primary_url)
 
-        # Tier 2: Direct DeepSeek Fallback (when OpenRouter credits exhaust or rate limit)
-        self.deepseek_key = os.getenv("DEEPSEEK_API_KEY")
-        self.deepseek_url = os.getenv("DEEPSEEK_URL") or "https://api.deepseek.com"
-        self.deepseek_model = os.getenv("DEEPSEEK_MODEL") or "deepseek-chat"
-        self.deepseek_client = OpenAI(api_key=self.deepseek_key, base_url=self.deepseek_url)
+        # Fallback LLM Provider Config
+        self.fallback_key = os.getenv("ANALYTICS_FALLBACK_LLM_API_KEY") or os.getenv("DEEPSEEK_API_KEY") or self.primary_key
+        self.fallback_url = os.getenv("ANALYTICS_FALLBACK_LLM_BASE_URL") or os.getenv("DEEPSEEK_URL") or "https://api.deepseek.com"
+        self.fallback_model = os.getenv("ANALYTICS_FALLBACK_LLM_MODEL") or os.getenv("DEEPSEEK_MODEL") or "deepseek-chat"
+        self.fallback_client = OpenAI(api_key=self.fallback_key, base_url=self.fallback_url)
 
     def _call_llm(self, client: OpenAI, model: str, question: str) -> AnalyticsQueryPlan:
         response = client.chat.completions.create(
@@ -198,23 +198,23 @@ class AnalyticsPlanner:
 
         last_err = None
 
-        # Tier 1: Try OpenRouter
+        # Tier 1: Primary LLM Provider
         try:
-            plan = self._call_llm(self.openrouter_client, self.openrouter_model, question)
+            plan = self._call_llm(self.primary_client, self.primary_model, question)
             latency = (time.perf_counter() - start_time) * 1000.0
             return plan, latency
         except Exception as e:
             last_err = e
             # Log failover notice
-            print(f"[AnalyticsPlanner] OpenRouter attempt failed ({e}). Failing over to Direct DeepSeek (deepseek-chat)...", flush=True)
+            print(f"[AnalyticsPlanner] Primary provider attempt failed ({e}). Failing over to Fallback provider ({self.fallback_model})...", flush=True)
 
-        # Tier 2: Fallback to Direct DeepSeek
+        # Tier 2: Fallback LLM Provider
         try:
-            plan = self._call_llm(self.deepseek_client, self.deepseek_model, question)
+            plan = self._call_llm(self.fallback_client, self.fallback_model, question)
             latency = (time.perf_counter() - start_time) * 1000.0
             return plan, latency
-        except Exception as e_deepseek:
-            last_err = f"OpenRouter: {last_err} | DeepSeek: {e_deepseek}"
+        except Exception as e_fallback:
+            last_err = f"Primary: {last_err} | Fallback: {e_fallback}"
 
         # Pydantic or parsing error -> INVALID_PLAN
         plan = AnalyticsQueryPlan(
