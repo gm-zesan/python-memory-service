@@ -46,86 +46,46 @@ def ingest_memory(req: MemoryIngestRequest):
 
         edges_created = 1  # [:PARTICIPATED_IN]
 
-        # Set payment preference
-        if extracted.get("payment_preference"):
-            neo4j_client.set_payment_preference(
-                workspace_id=req.workspace_id,
-                customer_id=req.customer_id,
-                conversation_id=req.conversation_id,
-                payment_code=extracted["payment_preference"]["code"],
-                payment_name=extracted["payment_preference"]["name"],
-            )
-            edges_created += 1
+        # Record preferences
+        for pref in extracted.get("preferences", []):
+            if "category" in pref and "value" in pref:
+                neo4j_client.upsert_preference(
+                    workspace_id=req.workspace_id,
+                    customer_id=req.customer_id,
+                    conversation_id=req.conversation_id,
+                    category=pref["category"],
+                    value=pref["value"],
+                )
+                edges_created += 1
 
-        # Set size preference
-        if extracted.get("size_preference"):
-            neo4j_client.set_size_preference(
-                workspace_id=req.workspace_id,
-                customer_id=req.customer_id,
-                conversation_id=req.conversation_id,
-                size_value=extracted["size_preference"],
-            )
-            edges_created += 1
-
-        # Set color preference
-        if extracted.get("color_preference"):
-            neo4j_client.set_color_preference(
-                workspace_id=req.workspace_id,
-                customer_id=req.customer_id,
-                conversation_id=req.conversation_id,
-                color_value=extracted["color_preference"],
-            )
-            edges_created += 1
-
-        # Set delivery preference
-        if extracted.get("delivery_preference"):
-            neo4j_client.set_delivery_preference(
-                workspace_id=req.workspace_id,
-                customer_id=req.customer_id,
-                conversation_id=req.conversation_id,
-                delivery_instruction=extracted["delivery_preference"],
-            )
-            edges_created += 1
-
-        # Record discussed orders
-        for order_id in extracted.get("discussed_orders", []):
-            neo4j_client.record_discussed_order(
-                workspace_id=req.workspace_id,
-                customer_id=req.customer_id,
-                conversation_id=req.conversation_id,
-                order_id=order_id,
-            )
-            edges_created += 1
-
-        # Record product interests
-        for prod_title in extracted.get("interested_products", []):
-            neo4j_client.record_product_interest(
-                workspace_id=req.workspace_id,
-                customer_id=req.customer_id,
-                conversation_id=req.conversation_id,
-                product_title=prod_title,
-            )
-            edges_created += 1
+        # Record interests
+        for interest in extracted.get("interests", []):
+            if "entity_type" in interest and "entity_name" in interest:
+                neo4j_client.upsert_interest(
+                    workspace_id=req.workspace_id,
+                    customer_id=req.customer_id,
+                    conversation_id=req.conversation_id,
+                    entity_type=interest["entity_type"],
+                    entity_name=interest["entity_name"],
+                )
+                edges_created += 1
 
         # Record reported issues
-        for issue in extracted.get("reported_issues", []):
-            neo4j_client.record_reported_issue(
-                workspace_id=req.workspace_id,
-                customer_id=req.customer_id,
-                conversation_id=req.conversation_id,
-                category=issue["category"],
-                description=issue["description"],
-            )
-            edges_created += 1
+        for issue in extracted.get("issues", []):
+            if "category" in issue and "description" in issue:
+                neo4j_client.upsert_issue(
+                    workspace_id=req.workspace_id,
+                    customer_id=req.customer_id,
+                    conversation_id=req.conversation_id,
+                    category=issue["category"],
+                    description=issue["description"],
+                )
+                edges_created += 1
 
         total_entities = (
-            len(extracted.get("discussed_orders", []))
-            + len(extracted.get("reported_issues", []))
-            + len(extracted.get("interested_products", []))
-            + (1 if extracted.get("payment_preference") else 0)
-            + (1 if extracted.get("size_preference") else 0)
-            + (1 if extracted.get("color_preference") else 0)
-            + (1 if extracted.get("delivery_preference") else 0)
+            len(extracted.get("preferences", []))
+            + len(extracted.get("interests", []))
+            + len(extracted.get("issues", []))
         )
 
         return MemoryIngestResponse(
