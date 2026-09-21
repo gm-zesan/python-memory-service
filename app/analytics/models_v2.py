@@ -5,7 +5,7 @@ and formal relationship specifications.
 """
 
 from enum import Enum
-from typing import List, Optional, Union, Literal, Dict, Any
+from typing import List, Optional, Union, Literal, Any
 # pyrefly: ignore [missing-import]
 from pydantic import BaseModel, Field, field_validator, model_validator
 

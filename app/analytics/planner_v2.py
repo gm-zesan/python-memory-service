@@ -18,18 +18,8 @@ logger = logging.getLogger(__name__)
 
 from app.analytics.models_v2 import (
     DomainEnum,
-    AggregationType,
-    OperatorType,
-    MeasureSpec,
-    DimensionSpec,
-    FilterSpec,
-    TimeRangeSpec,
-    OrderBySpec,
-    DerivedMetricType,
-    DerivedMetricSpec,
     SemanticQueryPlan,
 )
-from app.analytics.validator_v2 import SemanticValidator
 
 load_dotenv()
 

@@ -58,13 +58,13 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 3. Install Dependencies
+### 4. Install Dependencies
 Install all required Python packages (including FastAPI, PyMySQL, Neo4j drivers, etc.).
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
+### 5. Configure Environment Variables
 The service requires connection details for MySQL, Neo4j, and your LLM provider.
 
 1. Copy the example configuration file:
@@ -80,7 +80,7 @@ The service requires connection details for MySQL, Neo4j, and your LLM provider.
    - **Neo4j Database:** `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`
    - **LLM Keys:** Set `ANALYTICS_LLM_API_KEY` or fallback keys (e.g., DeepSeek/OpenRouter).
 
-### 5. Start the Service
+### 6. Start the Service
 Run the application using `uvicorn` (with hot-reload enabled for development).
 
 ```bash
