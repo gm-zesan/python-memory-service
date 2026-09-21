@@ -9,9 +9,12 @@ Equipped with zero-temperature LLM execution and automatic 2-tier OpenRouter -> 
 import os
 import json
 import time
+import logging
 from typing import Tuple, Dict, Any, Optional
 from openai import OpenAI
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 from app.analytics.models_v2 import (
     DomainEnum,
@@ -224,9 +227,8 @@ class SemanticPlannerV2:
                 err_str = str(err_tier1)
                 if "402" in err_str or "credits" in err_str.lower() or "quota" in err_str.lower():
                     self._primary_exhausted = True
-                print(
-                    f"[SemanticPlannerV2] Primary LLM provider failed ({err_tier1}). Failing over to Fallback LLM provider...",
-                    flush=True,
+                logger.warning(
+                    f"[SemanticPlannerV2] Primary LLM provider failed ({err_tier1}). Failing over to Fallback LLM provider..."
                 )
                 meta["fallback_triggered"] = True
                 meta["provider_used"] = "fallback_llm"

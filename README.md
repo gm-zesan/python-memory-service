@@ -30,10 +30,13 @@ cd python-memory-service
 Before running this service, you need the databases up and running:
 
 **Neo4j (Graph Database):**
-The easiest way to run Neo4j is via Docker. If you have the `typesense` folder from this project suite, simply run its docker-compose file which includes Neo4j pre-configured with the APOC plugin:
+The easiest way to run Neo4j is via Docker. Run the following command in your terminal to start a Neo4j instance with the required APOC plugin enabled:
 ```bash
-cd ../typesense
-docker compose up -d
+docker run -d --name neo4j \
+  -p 7474:7474 -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/secret1234 \
+  -e NEO4J_PLUGINS=\[\"apoc\"\] \
+  neo4j:5-community
 ```
 *(This starts Neo4j on `localhost:7687` with username `neo4j` and password `secret1234`)*
 
@@ -94,13 +97,32 @@ The service will now be available at: **http://127.0.0.1:8002**
 Once the server is running, you can access the interactive Swagger UI documentation at:
 👉 **[http://127.0.0.1:8002/docs](http://127.0.0.1:8002/docs)**
 
-### Key Endpoints:
-- `GET /health` : Health check and database connectivity status.
-- `POST /memory/ingest` : Asynchronously parse conversation turns and commit preference/interaction edges.
-- `POST /memory/search` : Retrieve compact subgraphs for prompt injection.
-- `DELETE /memory/customer/{customer_id}` : GDPR customer memory purge.
-- `DELETE /memory/conversation/{conversation_id}` : Remove specific conversation session memories.
-- **Analytics Routing**: Handles generic text-to-SQL logic for Business Intelligence.
+### ⚙️ System Endpoints
+
+- **`GET /health`**
+  - **Description:** Checks the health and connectivity of the service and the Neo4j database. Use this to monitor if the service is running perfectly.
+
+### 📊 Analytics Endpoints (Business Intelligence)
+
+- **`POST /analytics/query`**
+  - **Description:** The core Semantic Analytics Engine (Text-to-SQL). It takes a natural language query in English or Bengali, translates it into a semantic query plan using an LLM, compiles it into a safe read-only SQL query, executes it against the database, and returns a formatted markdown report.
+
+### 🧠 Memory Graph Endpoints (Customer Knowledge)
+
+- **`POST /memory/ingest`**
+  - **Description:** Analyzes a conversation session (customer and agent messages) using an LLM to extract important facts, preferences, interests, and issues. It then saves these extracted entities and relationships as a knowledge graph in the Neo4j database.
+  
+- **`POST /memory/search`**
+  - **Description:** Searches the Neo4j knowledge graph for relevant past memories and preferences of a specific customer based on their current query. It returns a compact sub-graph context that can be injected into an external LLM's system prompt for personalized responses.
+
+- **`GET /memory/customer/{customer_id}`**
+  - **Description:** Fetches the entire memory graph (nodes and edges) associated with a specific customer for viewing or administrative purposes.
+
+- **`DELETE /memory/customer/{customer_id}`**
+  - **Description:** Completely deletes all stored memories, preferences, and issues for a specific customer from the Neo4j database (Useful for GDPR compliance or resetting a customer profile).
+
+- **`DELETE /memory/conversation/{conversation_id}`**
+  - **Description:** Deletes memories associated with a specific conversation session. Useful if a conversation was recorded by mistake or contains sensitive information that needs to be purged.
 
 ---
 

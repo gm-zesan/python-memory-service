@@ -7,8 +7,11 @@ Does NOT generate raw SQL.
 import json
 import os
 import time
+import logging
 from typing import Dict, Any, Tuple
 # pyrefly: ignore [missing-import]
+
+logger = logging.getLogger(__name__)
 from openai import OpenAI
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
@@ -206,7 +209,7 @@ class AnalyticsPlanner:
         except Exception as e:
             last_err = e
             # Log failover notice
-            print(f"[AnalyticsPlanner] Primary provider attempt failed ({e}). Failing over to Fallback provider ({self.fallback_model})...", flush=True)
+            logger.warning(f"[AnalyticsPlanner] Primary provider attempt failed ({e}). Failing over to Fallback provider ({self.fallback_model})...")
 
         # Tier 2: Fallback LLM Provider
         try:
