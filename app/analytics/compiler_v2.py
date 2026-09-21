@@ -296,18 +296,31 @@ class AnalyticsCompilerV2:
         self, plan: SemanticQueryPlan, workspace_id: int, grain_info: GrainAnalysisResult
     ) -> Tuple[str, List[Any]]:
         # D1: Entity Lookups (e.g. Customer listing / lookup without measures)
-        if any(d.name == "customer" for d in plan.dimensions) and not plan.measures and not plan.derived_metrics:
-            cust_filter = next((f for f in plan.filters if f.field in ("customer", "name")), None)
-            if cust_filter:
-                return (
-                    "SELECT id, name FROM analytics_customers WHERE workspace_id = ? AND name = ?;",
-                    [workspace_id, cust_filter.value],
-                )
-            else:
-                return (
-                    "SELECT id, name FROM analytics_customers WHERE workspace_id = ? ORDER BY name ASC;",
-                    [workspace_id],
-                )
+        if not plan.measures and not plan.derived_metrics:
+            if any(d.name == "customer" for d in plan.dimensions):
+                cust_filter = next((f for f in plan.filters if f.field in ("customer", "name")), None)
+                if cust_filter:
+                    return (
+                        "SELECT id, name FROM analytics_customers WHERE workspace_id = ? AND name = ?;",
+                        [workspace_id, cust_filter.value],
+                    )
+                else:
+                    return (
+                        "SELECT id, name FROM analytics_customers WHERE workspace_id = ? ORDER BY name ASC;",
+                        [workspace_id],
+                    )
+            if any(d.name in ("salesperson", "collector") for d in plan.dimensions):
+                sp_filter = next((f for f in plan.filters if f.field in ("salesperson", "collector", "name")), None)
+                if sp_filter:
+                    return (
+                        "SELECT id, name FROM analytics_salespersons WHERE workspace_id = ? AND name = ?;",
+                        [workspace_id, sp_filter.value],
+                    )
+                else:
+                    return (
+                        "SELECT id, name FROM analytics_salespersons WHERE workspace_id = ? ORDER BY name ASC;",
+                        [workspace_id],
+                    )
 
         # D2: Salesperson-specific Total Sales / Collection / Order Count
         sp_filter = next((f for f in plan.filters if f.field in ("salesperson", "collector", "salesperson_name", "collector_name")), None)
@@ -370,15 +383,24 @@ class AnalyticsCompilerV2:
                     return sql, [workspace_id, sp_name]
 
         # D3: Collector Ranking (includes agents with 0 collection)
-        if plan.domain == DomainEnum.PAYMENTS and any(g in ("collector", "salesperson") for g in plan.group_by) and (not plan.time_range or plan.time_range.type == "lifetime") and not plan.filters:
+        if any(g in ("collector", "salesperson") for g in plan.group_by) and (not plan.time_range or plan.time_range.type == "lifetime") and not plan.filters:
             limit_clause = f" LIMIT {plan.limit}" if plan.limit else ""
-            sql = (
-                "SELECT s.name, COALESCE(SUM(p.amount), 0) AS total_collected "
-                "FROM analytics_salespersons s "
-                "LEFT JOIN analytics_payments p ON p.salesperson_id = s.id "
-                f"WHERE s.workspace_id = ? GROUP BY s.id, s.name ORDER BY total_collected DESC{limit_clause};"
-            )
-            return sql, [workspace_id]
+            if plan.domain == DomainEnum.PAYMENTS:
+                sql = (
+                    "SELECT s.id, s.name, COALESCE(SUM(p.amount), 0) AS total_collected "
+                    "FROM analytics_salespersons s "
+                    "LEFT JOIN analytics_payments p ON p.salesperson_id = s.id "
+                    f"WHERE s.workspace_id = ? GROUP BY s.id, s.name ORDER BY total_collected DESC{limit_clause};"
+                )
+                return sql, [workspace_id]
+            elif plan.domain == DomainEnum.SALES:
+                sql = (
+                    "SELECT s.id, s.name, COALESCE(SUM(o.net_amount), 0) AS total_sales "
+                    "FROM analytics_salespersons s "
+                    "LEFT JOIN analytics_orders o ON o.salesperson_id = s.id AND o.status = 'completed' "
+                    f"WHERE s.workspace_id = ? GROUP BY s.id, s.name ORDER BY total_sales DESC{limit_clause};"
+                )
+                return sql, [workspace_id]
 
         # D4: Product Quantity Lookup for single product
         prod_filter = next((f for f in plan.filters if f.field in ("product", "product_name")), None)
