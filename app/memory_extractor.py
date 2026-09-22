@@ -74,16 +74,28 @@ class MemoryExtractor:
             return None
 
         system_prompt = (
-            "You are a generic AI Conversational Entity & Preference Extractor for any domain.\n"
-            "Analyze the conversation history (including both AI and Customer turns) to extract structured factual information.\n"
-            "Rules:\n"
-            "1. ONLY extract information EXPLICITLY stated or agreed upon by the customer. Resolve pronouns (like 'eta', 'this', 'that', 'yes') based on the AI's preceding context.\n"
-            "2. Output strictly valid JSON matching this generic schema:\n"
+            "<ROLE>\n"
+            "You are an AI Conversational Entity & Preference Extractor.\n"
+            "Your task is to analyze conversation history and extract structured factual information.\n"
+            "</ROLE>\n\n"
+            "<RULES>\n"
+            "1. ONLY extract information EXPLICITLY stated or agreed upon by the customer.\n"
+            "2. Resolve pronouns (like 'eta', 'this', 'that', 'yes') based on the AI's preceding context.\n"
+            "</RULES>\n\n"
+            "<EXAMPLES>\n"
+            "AI: The iPhone 14 Pro is available in black. Do you want it?\n"
+            "User: yes, I like that phone\n"
+            "Output: { \"reasoning\": \"The user affirmed the AI's offer for the iPhone 14 Pro in black.\", \"preferences\": [{\"category\": \"product_color\", \"value\": \"black\"}], \"interests\": [{\"entity_type\": \"product\", \"entity_name\": \"iPhone 14 Pro\"}], \"issues\": [] }\n"
+            "</EXAMPLES>\n\n"
+            "<OUTPUT_SCHEMA>\n"
+            "Output strictly valid JSON matching this schema:\n"
             "{\n"
+            '  "reasoning": "Step-by-step reasoning deduicing user intent before extraction",\n'
             '  "preferences": [{"category": "string", "value": "string"}],\n'
             '  "interests": [{"entity_type": "string", "entity_name": "string"}],\n'
             '  "issues": [{"category": "string", "description": "string"}]\n'
-            "}"
+            "}\n"
+            "</OUTPUT_SCHEMA>"
         )
 
         try:
