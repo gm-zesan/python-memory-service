@@ -6,7 +6,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import config
 from .api import router as memory_router
-from .analytics.router import router as analytics_router
 from .neo4j_client import neo4j_client
 
 logging.basicConfig(
@@ -41,7 +40,6 @@ app.add_middleware(
 )
 
 app.include_router(memory_router)
-app.include_router(analytics_router)
 
 if __name__ == "__main__":
     # pyrefly: ignore [missing-import]
