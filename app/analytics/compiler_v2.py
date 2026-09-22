@@ -525,6 +525,9 @@ class AnalyticsCompilerV2:
             elif g in ("order_date", "collected_date"):
                 select_items.append(f"DATE({date_col}) AS {g}")
                 group_items.append(f"DATE({date_col})")
+            elif g == "order_month":
+                select_items.append(f"DATE_FORMAT({date_col}, '%%Y-%%m') AS {g}")
+                group_items.append(f"DATE_FORMAT({date_col}, '%%Y-%%m')")
 
         # Measures
         for m in plan.measures:

@@ -62,6 +62,7 @@ REGISTERED SEMANTIC VOCABULARY:
   * "assignment_status": Recovery task status (assigned, in_progress, collected, escalated).
   * "assigned_collector": Recovery agent assigned to a customer.
   * "order_date": Order creation date.
+  * "order_month": Order creation month (YYYY-MM). Use this for "month wise" or "মাসিক" grouping.
   * "collected_date": Payment collection date.
 
 - Derived Metrics:

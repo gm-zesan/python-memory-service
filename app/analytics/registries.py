@@ -299,6 +299,15 @@ DIMENSION_REGISTRY: Dict[str, DimensionDefinition] = {
         data_type="date",
         description="Date when order was placed",
     ),
+    "order_month": DimensionDefinition(
+        name="order_month",
+        domain=DomainEnum.SALES,
+        source_table="analytics_orders",
+        id_column="order_date",
+        label_column="order_date",
+        data_type="string",
+        description="Month when order was placed (YYYY-MM)",
+    ),
     "collected_date": DimensionDefinition(
         name="collected_date",
         domain=DomainEnum.PAYMENTS,
@@ -512,6 +521,7 @@ CAPABILITY_MATRIX: Dict[DomainEnum, Dict[str, Set[str]]] = {
             "product",
             "category",
             "order_date",
+            "order_month",
             "status",
         },
         "group_by": {
@@ -520,6 +530,7 @@ CAPABILITY_MATRIX: Dict[DomainEnum, Dict[str, Set[str]]] = {
             "product",
             "category",
             "order_date",
+            "order_month",
         },
         "derived_metrics": {
             "average_order_value",
