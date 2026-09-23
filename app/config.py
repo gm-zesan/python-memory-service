@@ -24,7 +24,7 @@ class MemoryConfig:
     LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "generic")
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
     LLM_BASE_URL: str = os.getenv("LLM_BASE_URL", "https://api.deepseek.com")
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "deepseek-chat")
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "deepseek-flash")
 
     # Guardrails
     MAX_SUBGRAPH_EDGES: int = int(os.getenv("MAX_SUBGRAPH_EDGES", "5"))
