@@ -29,9 +29,10 @@ class MemoryExtractor:
         clean = PASSWORD_PATTERN.sub('[PASSWORD_REDACTED]', clean)
         return clean
 
-    def extract_from_messages(self, messages: List[MessageItem]) -> Dict[str, Any]:
+    def extract_from_messages(self, messages: List[MessageItem]) -> tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
         """
         Extracts generic preferences, interests, and reported issues from conversation turns using LLM.
+        Returns a tuple of (extracted_data, llm_usage).
         """
         extracted = {
             "preferences": [],
@@ -40,13 +41,13 @@ class MemoryExtractor:
         }
 
         # Asynchronous LLM Semantic Extraction
-        llm_extracted = self.extract_with_llm(messages)
+        llm_extracted, usage = self.extract_with_llm(messages)
         if llm_extracted:
-            return llm_extracted
+            return llm_extracted, usage
             
-        return extracted
+        return extracted, usage
 
-    def extract_with_llm(self, messages: List[MessageItem]) -> Optional[Dict[str, Any]]:
+    def extract_with_llm(self, messages: List[MessageItem]) -> tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
         """
         Asynchronously extract complex, multi-entity relationships using configured LLM.
         Times out gracefully after 2.5s and falls back to deterministic extraction.
@@ -55,7 +56,7 @@ class MemoryExtractor:
         api_key = settings.get('api_key')
         is_local = settings.get('provider') in ('ollama', 'local', 'vllm')
         if not api_key and not is_local:
-            return None
+            return None, None
 
         # Build conversation text with full context for coreference resolution
         formatted_turns = []
@@ -67,11 +68,11 @@ class MemoryExtractor:
             formatted_turns.append(f"{role}: {self.sanitize_text(m.body)}")
             
         if not has_inbound:
-            return None
+            return None, None
 
         prompt_text = "\n".join(formatted_turns)
         if len(prompt_text.strip()) < 15:
-            return None
+            return None, None
 
         system_prompt = (
             "<ROLE>\n"
@@ -119,9 +120,19 @@ class MemoryExtractor:
                     data = res.json()
                     content = data["choices"][0]["message"]["content"]
                     parsed = json.loads(content)
-                    return parsed
+                    raw_usage = data.get("usage", {})
+                    usage = {
+                        "prompt_tokens": raw_usage.get("prompt_tokens", 0),
+                        "completion_tokens": raw_usage.get("completion_tokens", 0),
+                        "total_tokens": raw_usage.get("total_tokens", 0),
+                        "model": settings.get("model", "deepseek-flash"),
+                        "provider": settings.get("provider", "deepseek"),
+                    }
+                    return parsed, usage
         except Exception as e:
             logger.debug(f"[MemoryExtractor] LLM extraction bypassed or timed out: {e}")
-            return None
+            return None, None
+
+        return None, None
 
 memory_extractor = MemoryExtractor()

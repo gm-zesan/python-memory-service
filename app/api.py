@@ -42,7 +42,7 @@ def ingest_memory(req: MemoryIngestRequest):
         )
 
         # 2. Extract structured entities, preferences, orders, issues (deterministic + LLM)
-        extracted = memory_extractor.extract_from_messages(req.messages)
+        extracted, llm_usage = memory_extractor.extract_from_messages(req.messages)
 
         edges_created = 1  # [:PARTICIPATED_IN]
 
@@ -96,6 +96,7 @@ def ingest_memory(req: MemoryIngestRequest):
             edges_created=edges_created,
             entities=[{"type": k, "data": v} for k, v in extracted.items() if v],
             edges=[],
+            llm_usage=llm_usage,
         )
     except Exception as e:
         logger.error(f"[API] Memory ingest error: {e}", exc_info=True)

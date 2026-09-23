@@ -33,6 +33,7 @@ class MemoryIngestResponse(BaseModel):
     edges_created: int = 0
     entities: List[Dict[str, Any]] = []
     edges: List[Dict[str, Any]] = []
+    llm_usage: Optional[Dict[str, Any]] = None
 
 class MemorySearchRequest(BaseModel):
     workspace_id: int
