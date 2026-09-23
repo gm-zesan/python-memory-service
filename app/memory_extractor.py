@@ -125,7 +125,7 @@ class MemoryExtractor:
                         "prompt_tokens": raw_usage.get("prompt_tokens", 0),
                         "completion_tokens": raw_usage.get("completion_tokens", 0),
                         "total_tokens": raw_usage.get("total_tokens", 0),
-                        "model": settings.get("model", "deepseek-flash"),
+                        "model": settings.get("model", "deepseek-chat"),
                         "provider": settings.get("provider", "deepseek"),
                     }
                     return parsed, usage
